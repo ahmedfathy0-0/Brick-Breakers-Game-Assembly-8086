@@ -117,25 +117,25 @@ MovePadel PROC
 MovePadel ENDP
 DrawBall PROC NEAR
 		
-                        MOV  CX,ball_x                ;set the initial column (X)
-                        MOV  DX,ball_y                ;set the initial line (Y)
+                        MOV  CX,ball_x              
+                        MOV  DX,ball_y                
 		
     DrawBall_HORIZONTAL:
-                        MOV  AH,0Ch                   ;set the configuration to writing a pixel
-                        MOV  AL,0Fh                   ;choose white as color
-                        MOV  BH,00h                   ;set the page number
-                        INT  10h                      ;execute the configuration
+                        MOV  AH,0Ch                
+                        MOV  AL,0Fh                   
+                        MOV  BH,00h                 
+                        INT  10h                     
 			
-                        INC  CX                       ;CX = CX + 1
-                        MOV  AX,CX                    ;CX - BALL_X > BALL_SIZE (Y -> We go to the next line,N -> We continue to the next column
+                        INC  CX                      
+                        MOV  AX,CX                    
                         SUB  AX,ball_x
                         CMP  AX,ball_size
                         JNG  DrawBall_HORIZONTAL
 			
-                        MOV  CX,ball_x                ;the CX register goes back to the initial column
-                        INC  DX                       ;we advance one line
+                        MOV  CX,ball_x                
+                        INC  DX                       
 			
-                        MOV  AX,DX                    ;DX - BALL_Y > BALL_SIZE (Y -> we exit this procedure,N -> we continue to the next line
+                        MOV  AX,DX                    
                         SUB  AX,ball_y
                         CMP  AX,ball_size
                         JNG  DrawBall_HORIZONTAL
