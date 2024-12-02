@@ -8,7 +8,7 @@
     padel_y1      DW  187
     padel_y2      DW  190
     padel_color   db  4
-    padel_speed   equ 10
+    padel_speed   equ 7
 
     ball_x        DW  100
     ball_y        DW  100
@@ -16,8 +16,10 @@
     ball_dy       DW  1
     ball_size     equ 3
     ball_color    db  2
+    diffeculty    db  0
     ;rectangles data
-    colStart      dw  10
+    
+    colStart      dw  200
     rowStart      dw  20, 35, 50, 65
     rwidth        dw  40
     rheight       dw  10
@@ -160,7 +162,13 @@ DrawBall PROC
                         RET
 DrawBall ENDP
 
+    end_early:            
+                        ret
 MoveBall PROC
+                        inc  diffeculty
+                        cmp  diffeculty, 01fh
+                        jne  end_early
+                        mov  diffeculty, 0
                         mov  ax, ball_x
                         add  ax, ball_dx
                         mov  ball_x, ax
@@ -224,9 +232,6 @@ MoveBall PROC
 
     ball_bottom_edge:   
                         CALL ResetAll
-                     
-                     
-
     end_move:           
                         RET
 MoveBall ENDP
@@ -241,7 +246,9 @@ ResetAll PROC
                         mov  padel_y1, 187
                         mov  padel_y2, 190
                         CALL ClearScreen
+                        call DrawLevel1
                         CALL DrawPadel
+                        mov ball_color, 2
                         CALL DrawBall
                         mov  ah, 0
                         int  16h
@@ -317,6 +324,7 @@ DrawLevel1 proc
                         ret
 DrawLevel1 endp
 
+
 MAIN PROC
                         MOV  AX, @DATA
                         MOV  DS, AX
@@ -324,6 +332,8 @@ MAIN PROC
                         MOV  AH, 0                    ;following 3 lines to enter graphic mode
                         MOV  AL, 13h
                         INT  10h
+
+                        call DrawLevel1
 
     gameLoop:           
                         CALL DrawPadel
@@ -334,8 +344,6 @@ MAIN PROC
                         call MoveBall
                         mov  ball_color, 2
                         call DrawBall
-
-                        call DrawLevel1
 
                         JMP  gameLoop
 
