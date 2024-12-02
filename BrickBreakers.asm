@@ -1,29 +1,31 @@
+
 .MODEL small
 .STACK 100h
 
 .DATA
-    padel_x1    DW  135
-    padel_x2    DW  185
-    padel_y1    DW  187
-    padel_y2    DW  190
-    padel_color equ 4
-    padel_speed equ 10
+    padel_x1      DW  135
+    padel_x2      DW  185
+    padel_y1      DW  187
+    padel_y2      DW  190
+    padel_color   db  4
+    padel_speed   equ 10
 
-    ball_x      DW  100
-    ball_y      DW  100
-    ball_dx     DW  1
-    ball_dy     DW  1
-    ball_size   equ 3
-    ball_color  equ 2
-                                  ;rectangles data
-    colStart dw 10
-    rowStart dw 20, 35, 50, 65
-    rwidth dw 40
-    rheight dw 10
-    numRectangles dw 7
+    ball_x        DW  100
+    ball_y        DW  100
+    ball_dx       DW  1
+    ball_dy       DW  1
+    ball_size     equ 3
+    ball_color    db  2
+    ;rectangles data
+    colStart      dw  10
+    rowStart      dw  20, 35, 50, 65
+    rwidth        dw  40
+    rheight       dw  10
+    numRectangles dw  7
 
 
 .CODE
+
 ClearScreen PROC
                         mov  ax, 0A000h
                         mov  es, ax
@@ -33,6 +35,7 @@ ClearScreen PROC
                         rep  stosb
                         RET
 ClearScreen ENDP
+
 DrawPadel PROC
                         mov  cx, padel_x1
                         mov  dx, padel_y1
@@ -108,41 +111,48 @@ MovePadel PROC
     MoveRight:          
                         cmp  padel_x2, 310
                         jge  stop_move
+                        mov  padel_color, 0
+                        call DrawPadel
                         add  padel_x1, padel_speed
                         add  padel_x2, padel_speed
+                        mov  padel_color, 4
                         RET
                      
     MoveLeft:           
                         cmp  padel_x1, 10
                         jle  stop_move
+                        mov  padel_color, 0
+                        call DrawPadel
                         sub  padel_x1, padel_speed
                         sub  padel_x2, padel_speed
+                        mov  padel_color, 4
                         RET
     stop_move:          
                         RET
 
 MovePadel ENDP
-DrawBall PROC NEAR
+
+DrawBall PROC
 		
-                        MOV  CX,ball_x              
-                        MOV  DX,ball_y                
+                        MOV  CX,ball_x
+                        MOV  DX,ball_y
 		
     DrawBall_HORIZONTAL:
-                        MOV  AH,0Ch                
-                        MOV  AL,0Fh                   
-                        MOV  BH,00h                 
-                        INT  10h                     
+                        MOV  AH,0Ch
+                        MOV  AL,ball_color
+                        MOV  BH,00h
+                        INT  10h
 			
-                        INC  CX                      
-                        MOV  AX,CX                    
+                        INC  CX
+                        MOV  AX,CX
                         SUB  AX,ball_x
                         CMP  AX,ball_size
                         JNG  DrawBall_HORIZONTAL
 			
-                        MOV  CX,ball_x                
-                        INC  DX                       
+                        MOV  CX,ball_x
+                        INC  DX
 			
-                        MOV  AX,DX                    
+                        MOV  AX,DX
                         SUB  AX,ball_y
                         CMP  AX,ball_size
                         JNG  DrawBall_HORIZONTAL
@@ -166,18 +176,22 @@ MoveBall PROC
                         jge  ball_right_edge
 
                         mov  ax, ball_y
+                        add  ax, ball_size
                         cmp  ax, padel_y1
                         jl   continue_move
 
                         mov  ax, ball_y
+                        add  ax, ball_size
                         cmp  ax, padel_y2
                         jg   continue_move
 
                         mov  ax, ball_x
+                        add  ax, ball_size
                         cmp  ax, padel_x1
                         jl   continue_move
                      
                         mov  ax, ball_x
+                        add  ax, ball_size
                         cmp  ax, padel_x2
                         jg   continue_move
                      
@@ -235,102 +249,93 @@ ResetAll PROC
 ResetAll ENDP
 
 
-GamePadel PROC
-                        CALL DrawPadel
-                        CALL DrawBall
-                     
-                        CALL MoveBall
-                        CALL MovePadel
-GamePadel ENDP
-
-Delay PROC
-                        MOV  CX, 0003h
-    delayLoop:          
-                        LOOP delayLoop
-                        RET
-Delay ENDP
-
 DrawRectangle PROC
-			            mov dx,rowStart[di]      ;set row start of each rectangle
-			            mov ah,0ch               ;command to draw pixel
-    lp:		            
-                        mov cx,colStart          ;(row,col)
-						mov bx,rwidth            ;set counter
-    draw_t:             int 10h
-			            inc cx
-			            dec bx
-				        cmp bx, 0
-		                jnz draw_t	   
-                        
-                        mov cx,colStart         
-						; mov dx,1         ;(row,col)
-						; add dx,rowStart       ;(190,10)
-                        inc dx 
+                        mov  dx,rowStart[di]          ;set row start of each rectangle
+                        mov  ah,0ch                   ;command to draw pixel
+    lp:                 
+                        mov  cx,colStart              ;(row,col)
+                        mov  bx,rwidth                ;set counter
 
-						mov bx,rwidth         ;set counter
-    draw_b:             int 10h
-			            inc cx
-			            dec bx
-				        cmp bx, 0
-		                jnz draw_b
-
-                        mov cx,colStart         
-						inc dx
+    draw_t:             int  10h
+                        inc  cx
+                        dec  bx
+                        cmp  bx, 0
+                        jnz  draw_t
                         
-                        mov cx, rowStart[di]
-                        add cx, rheight
-                        cmp dx, cx
-                        jnz lp
+                        mov  cx, colStart
+    ; mov dx,1         ;(row,col)
+    ; add dx,rowStart       ;(190,10)
+                        inc  dx
+
+                        mov  bx,rwidth                ;set counter
+    draw_b:             int  10h
+                        inc  cx
+                        dec  bx
+                        cmp  bx, 0
+                        jnz  draw_b
+
+                        mov  cx,colStart
+                        inc  dx
+                        
+                        mov  cx, rowStart[di]
+                        add  cx, rheight
+                        cmp  dx, cx
+                        jnz  lp
                         RET
 DrawRectangle ENDP
 
 DrawRow proc
-                        mov si, 0              ; si is rectangle index
-                        mov al, 0
-                        add ax, di             
-    draw_loop:
-                                               ; Calculate the starting position for the current rectangle
+                        mov  si, 0                    ; si is rectangle index
+                        mov  al, 0
+                        add  ax, di
+    draw_loop:          
+    ; Calculate the starting position for the current rectangle
                         push ax
-                        mov bx, si             
-                        mov ax, 40             ; Width of each rectangle
-                        add ax, 5              ; Add a starting offset (5)
-                        mul bx                 ; ax * bx where width (40)
-                        add ax, 5              ; Add a starting offset (10)  REMARK CAN BE DELETED
-                        mov colStart, ax       ; Store X position in colStart
-                        pop ax
-                        inc al                 ;change color of each rectangle
-                        call DrawRectangle      
+                        mov  bx, si
+                        mov  ax, 40                   ; Width of each rectangle
+                        add  ax, 5                    ; Add a starting offset (5)
+                        mul  bx                       ; ax * bx where width (40)
+                        add  ax, 5                    ; Add a starting offset (10)  REMARK CAN BE DELETED
+                        mov  colStart, ax             ; Store X position in colStart
+                        pop  ax
+                        inc  al                       ;change color of each rectangle
+                        call DrawRectangle
                         
-                        inc si                 ; Move to the next rectangle
-                        cmp si,numRectangles
-                        jnz draw_loop
-	                    ret
-DrawRow  ENDP
+                        inc  si                       ; Move to the next rectangle
+                        cmp  si,numRectangles
+                        jnz  draw_loop
+                        ret
+DrawRow ENDP
 
 DrawLevel1 proc
-                        mov di, 0        ;index to rowStart array
-    rows_loop:
-						call DrawRow
-                        add di,2         ;move 2 bytes to second element
-                        cmp di, 8        
-                        jnz rows_loop
+                        mov  di, 0                    ;index to rowStart array
+    rows_loop:          
+                        call DrawRow
+                        add  di,2                     ;move 2 bytes to second element
+                        cmp  di, 8
+                        jnz  rows_loop
                         ret
-DrawLevel1  endp
-
+DrawLevel1 endp
 
 MAIN PROC
                         MOV  AX, @DATA
                         MOV  DS, AX
 
-                        MOV  AH, 0             ;following 3 lines to enter graphic mode
+                        MOV  AH, 0                    ;following 3 lines to enter graphic mode
                         MOV  AL, 13h
                         INT  10h
+
     gameLoop:           
+                        CALL DrawPadel
+                        CALL MovePadel
+                        mov  ball_color, 0
+                        call DrawBall
 
-                        CALL ClearScreen
+                        call MoveBall
+                        mov  ball_color, 2
+                        call DrawBall
+
                         call DrawLevel1
-                        CALL GamePadel
-
 
                         JMP  gameLoop
 
@@ -339,3 +344,6 @@ MAIN PROC
 MAIN ENDP
 
 END MAIN
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
