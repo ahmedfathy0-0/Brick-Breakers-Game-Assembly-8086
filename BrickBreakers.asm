@@ -15,6 +15,13 @@
     ball_dy     DW  1
     ball_size   equ 3
     ball_color  equ 2
+                                  ;rectangles data
+    colStart dw 10
+    rowStart dw 20, 35, 50, 65
+    rwidth dw 40
+    rheight dw 10
+    numRectangles dw 7
+
 
 .CODE
 ClearScreen PROC
@@ -228,8 +235,6 @@ ResetAll PROC
 ResetAll ENDP
 
 
-
-
 GamePadel PROC
                         CALL DrawPadel
                         CALL DrawBall
@@ -245,17 +250,85 @@ Delay PROC
                         RET
 Delay ENDP
 
+DrawRectangle PROC
+			            mov dx,rowStart[di]      ;set row start of each rectangle
+			            mov ah,0ch               ;command to draw pixel
+    lp:		            
+                        mov cx,colStart          ;(row,col)
+						mov bx,rwidth            ;set counter
+    draw_t:             int 10h
+			            inc cx
+			            dec bx
+				        cmp bx, 0
+		                jnz draw_t	   
+                        
+                        mov cx,colStart         
+						; mov dx,1         ;(row,col)
+						; add dx,rowStart       ;(190,10)
+                        inc dx 
+
+						mov bx,rwidth         ;set counter
+    draw_b:             int 10h
+			            inc cx
+			            dec bx
+				        cmp bx, 0
+		                jnz draw_b
+
+                        mov cx,colStart         
+						inc dx
+                        
+                        mov cx, rowStart[di]
+                        add cx, rheight
+                        cmp dx, cx
+                        jnz lp
+                        RET
+DrawRectangle ENDP
+
+DrawRow proc
+                        mov si, 0              ; si is rectangle index
+                        mov al, 0
+                        add ax, di             
+    draw_loop:
+                                               ; Calculate the starting position for the current rectangle
+                        push ax
+                        mov bx, si             
+                        mov ax, 40             ; Width of each rectangle
+                        add ax, 5              ; Add a starting offset (5)
+                        mul bx                 ; ax * bx where width (40)
+                        add ax, 5              ; Add a starting offset (10)  REMARK CAN BE DELETED
+                        mov colStart, ax       ; Store X position in colStart
+                        pop ax
+                        inc al                 ;change color of each rectangle
+                        call DrawRectangle      
+                        
+                        inc si                 ; Move to the next rectangle
+                        cmp si,numRectangles
+                        jnz draw_loop
+	                    ret
+DrawRow  ENDP
+
+DrawLevel1 proc
+                        mov di, 0        ;index to rowStart array
+    rows_loop:
+						call DrawRow
+                        add di,2         ;move 2 bytes to second element
+                        cmp di, 8        
+                        jnz rows_loop
+                        ret
+DrawLevel1  endp
+
+
 MAIN PROC
                         MOV  AX, @DATA
                         MOV  DS, AX
 
-                        MOV  AH, 0
+                        MOV  AH, 0             ;following 3 lines to enter graphic mode
                         MOV  AL, 13h
                         INT  10h
-
     gameLoop:           
 
                         CALL ClearScreen
+                        call DrawLevel1
                         CALL GamePadel
 
 
