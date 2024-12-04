@@ -221,17 +221,17 @@ MoveBall PROC
 
                         mov  bx, ball_x
                         sub  bx, ax
-                        sar  bx, 3
+                        mov  cl ,3
+                        shr  bx, cl
                         mov  ball_dx, bx
-                        neg  ball_dx
-
-                        jmp continue_move
+                        jmp  continue_move
 
     left_side:          
 
                         mov  bx, ball_x
                         sub  ax, bx
-                        sar  ax, 3
+                        mov  cl, 3
+                        shr  ax, cl
                         mov  ball_dx, ax
                         neg  ball_dx
                         jmp  continue_move
