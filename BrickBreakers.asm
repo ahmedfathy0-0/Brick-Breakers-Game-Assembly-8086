@@ -3,33 +3,35 @@
 .STACK 100h
 
 .DATA
-    padel_x1    DW  135
-    padel_x2    DW  185
-    padel_y1    DW  187
-    padel_y2    DW  190
-    padel_color db  4
-    padel_speed equ 7
+    padel_x1      DW  135
+    padel_x2      DW  185
+    padel_y1      DW  187
+    padel_y2      DW  190
+    padel_color   db  4
+    padel_speed   equ 7
 
-    ball_x      DW  100
-    ball_y      DW  100
-    ball_dx     DW  1
-    ball_dy     DW  1
-    ball_size   equ 3
-    ball_color  db  2
-    diffeculty  db  0
+    ball_x        DW  160
+    ball_y        DW  180
+    ball_dx       DW  0
+    ball_dy       DW  2
+    ball_og_speed equ 2
+    ball_size     equ 3
+    divide_factor equ 10
+    ball_color    db  2
+    diffeculty    db  0
     
     ;Bricks number of rows and columns
-    numRows     dw  8                                                                                     ; 2 * real number of rows
-    rowStart    dw  20, 35, 50, 65
-    numCols     dw  14                                                                                    ; 2 * real number of cols
-    colStart    dw  5, 50, 95, 140, 185, 230, 275
+    numRows       dw  8                                                                                     ; 2 * real number of rows
+    rowStart      dw  20, 35, 50, 65
+    numCols       dw  14                                                                                    ; 2 * real number of cols
+    colStart      dw  5, 50, 95, 140, 185, 230, 275
     
     ;Bricks existence
-    bricks      dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    bricks        dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
     ;Brick dimensions
-    rwidth      dw  40
-    rheight     dw  10
+    rwidth        dw  40
+    rheight       dw  10
 
 
 .CODE
@@ -172,7 +174,7 @@ DrawBall ENDP
                         ret
 MoveBall PROC
                         inc  diffeculty
-                        cmp  diffeculty, 00fh
+                        cmp  diffeculty, 01fh
                         jne  end_early
                         mov  diffeculty, 0
                         mov  ax, ball_x
@@ -208,19 +210,38 @@ MoveBall PROC
                         add  ax, ball_size
                         cmp  ax, padel_x2
                         jg   continue_move
-                     
-                        mov  ax, ball_dy
-                        neg  ax
-                        mov  ball_dy, ax
-    
+                        neg  ball_dy
+
+                        mov  ax, padel_x1
+                        add  ax, padel_x2
+                        shr  ax, 1
+                        cmp  ball_x, ax
+
+                        jb   left_side
+
+                        mov  bx, ball_x
+                        sub  bx, ax
+                        sar  bx, 3
+                        mov  ball_dx, bx
+                        neg  ball_dx
+
+                        jmp continue_move
+
+    left_side:          
+
+                        mov  bx, ball_x
+                        sub  ax, bx
+                        sar  ax, 3
+                        mov  ball_dx, ax
+                        neg  ball_dx
                         jmp  continue_move
 
     ball_left_edge:     
-                        mov  ball_dx, 1
+                        neg  ball_dx
                         jmp  continue_move
 
     ball_right_edge:    
-                        mov  ball_dx, -1
+                        neg  ball_dx
                         jmp  continue_move
 
     continue_move:      
@@ -233,7 +254,7 @@ MoveBall PROC
                         jmp  end_move
 
     ball_top_edge:      
-                        mov  ball_dy, 1
+                        neg  ball_dy
                         jmp  end_move
 
     ball_bottom_edge:   
@@ -243,10 +264,10 @@ MoveBall PROC
 MoveBall ENDP
 
 ResetAll PROC
-                        mov  ball_x, 100
-                        mov  ball_y, 100
-                        mov  ball_dx, 1
-                        mov  ball_dy, 1
+                        mov  ball_x, 160
+                        mov  ball_y, 180
+                        mov  ball_dx, ball_og_speed
+                        mov  ball_dy, ball_og_speed
                         mov  padel_x1, 135
                         mov  padel_x2, 185
                         mov  padel_y1, 187
@@ -262,12 +283,12 @@ ResetAll PROC
 ResetAll ENDP
 
 DrawRectangle PROC
-                        mov  dx,rowStart[di]          ;set row start of each rectangle
-                        mov  ah,0ch                   ;command to draw pixel
+                        mov  dx,rowStart[di]           ;set row start of each rectangle
+                        mov  ah,0ch                    ;command to draw pixel
     lp:                 
-                        mov  cx,colStart[si]          ;(row,col)
+                        mov  cx,colStart[si]           ;(row,col)
 
-                        mov  bx,rwidth                ;set counter
+                        mov  bx,rwidth                 ;set counter
     draw_t:             int  10h
                         inc  cx
                         dec  bx
@@ -277,7 +298,7 @@ DrawRectangle PROC
                         mov  cx, colStart[si]
                         inc  dx
 
-                        mov  bx,rwidth                ;set counter
+                        mov  bx,rwidth                 ;set counter
     draw_b:             int  10h
                         inc  cx
                         dec  bx
@@ -293,7 +314,7 @@ DrawRectangle PROC
 DrawRectangle ENDP
 
 DrawRow proc
-                        mov  si, 0                    ; si is col-index
+                        mov  si, 0                     ; si is col-index
                         mov  al, 0
                         mov  dl, al
 
@@ -307,22 +328,22 @@ DrawRow proc
                         mov  dx, ax
                         mov  dx, bricks[bx]
                         pop  ax
-                        inc  al                       ;change color of each rectangle
+                        inc  al                        ;change color of each rectangle
                         cmp  dx, 1
                         jne  dont_draw
                         call DrawRectangle
     dont_draw:          
-                        add  si, 2                    ; Move to the next rectangle
+                        add  si, 2                     ; Move to the next rectangle
                         cmp  si, numCols
                         jnz  draw_loop
                         ret
 DrawRow ENDP
 
 DrawLevel1 proc
-                        mov  di, 0                    ; di is row-index
+                        mov  di, 0                     ; di is row-index
     rows_loop:          
                         call DrawRow
-                        add  di,2                     ;move 2 bytes to second element
+                        add  di,2                      ;move 2 bytes to second element
                         cmp  di, numRows
                         jnz  rows_loop
                         ret
@@ -336,9 +357,9 @@ Collision proc
                         push di
                         push si
 
-                        mov  di, 0                    ; di is row-index
+                        mov  di, 0                     ; di is row-index
     collision_loop1:    
-                        mov  si, 0                    ; si is col-index
+                        mov  si, 0                     ; si is col-index
                         mov  ax, di
                         mov  cx, 7
                         mul  cx
@@ -350,11 +371,11 @@ Collision proc
                         jne  no_brick
                         call CheckCollision
     no_brick:           
-                        add  si, 2                    ; Move to the next rectangle
+                        add  si, 2                     ; Move to the next rectangle
                         cmp  si, numCols
                         jne  collision_loop2
 
-                        add  di,2                     ;move 2 bytes to second element
+                        add  di,2                      ;move 2 bytes to second element
                         cmp  di, numRows
                         jne  collision_loop1
 
@@ -433,7 +454,7 @@ MAIN PROC
                         MOV  AX, @DATA
                         MOV  DS, AX
 
-                        MOV  AH, 0                    ;following 3 lines to enter graphic mode
+                        MOV  AH, 0                     ;following 3 lines to enter graphic mode
                         MOV  AL, 13h
                         INT  10h
 
@@ -462,18 +483,18 @@ beep proc
                         push bx
                         push cx
                         push dx
-                        mov  al, 182                  ; Prepare the speaker for the
-                        out  43h, al                  ;  note.
-                        mov  ax, 400                  ; Frequency number (in decimal)
+                        mov  al, 182                   ; Prepare the speaker for the
+                        out  43h, al                   ;  note.
+                        mov  ax, 400                   ; Frequency number (in decimal)
     ;  for middle C.
-                        out  42h, al                  ; Output low byte.
-                        mov  al, ah                   ; Output high byte.
+                        out  42h, al                   ; Output low byte.
+                        mov  al, ah                    ; Output high byte.
                         out  42h, al
-                        in   al, 61h                  ; Turn on note (get value from
+                        in   al, 61h                   ; Turn on note (get value from
     ;  port 61h).
-                        or   al, 00000011b            ; Set bits 1 and 0.
-                        out  61h, al                  ; Send new value.
-                        mov  bx, 2                    ; Pause for duration of note.
+                        or   al, 00000011b             ; Set bits 1 and 0.
+                        out  61h, al                   ; Send new value.
+                        mov  bx, 2                     ; Pause for duration of note.
 .pause1:
                         mov  cx, 65535
 .pause2:
@@ -481,10 +502,10 @@ beep proc
                         jne  .pause2
                         dec  bx
                         jne  .pause1
-                        in   al, 61h                  ; Turn off note (get value from
+                        in   al, 61h                   ; Turn off note (get value from
     ;  port 61h).
-                        and  al, 11111100b            ; Reset bits 1 and 0.
-                        out  61h, al                  ; Send new value.
+                        and  al, 11111100b             ; Reset bits 1 and 0.
+                        out  61h, al                   ; Send new value.
 
                         pop  dx
                         pop  cx
