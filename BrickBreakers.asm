@@ -3,36 +3,38 @@
 .STACK 100h
 
 .DATA
-    padel_x1      DW  135
-    padel_x2      DW  185
-    padel_y1      DW  187
-    padel_y2      DW  190
-    padel_color   db  4
-    padel_speed   equ 7
+    padel_x1            DW  135
+    padel_x2            DW  185
+    padel_y1            DW  187
+    padel_y2            DW  190
+    padel_color         db  4
+    padel_speed         equ 7
 
-    ball_x        DW  160
-    ball_y        DW  180
-    ball_dx       DW  0
-    ball_dy       DW  2
-    ball_og_speed equ 2
-    ball_size     equ 3
-    divide_factor equ 10
-    ball_color    db  2
-    diffeculty    db  0
-    
+    ball_x              DW  160
+    ball_y              DW  180
+    ball_dx             DW  0
+    ball_dy             DW  2
+    ball_og_speed       equ 2
+    ball_size           equ 3
+    divide_factor       equ 10
+    ball_color          db  2
+    difficulty          db  0
+    original_difficulty db  0
+
+    selected_level      db  0
     ;Bricks number of rows and columns
-    numRows       dw  8                                                                                     ; 2 * real number of rows
-    rowStart      dw  20, 35, 50, 65, 80, 95, 110, 125, 140, 155
-    numCols       dw  14                                                                                    ; 2 * real number of cols
-    colStart      dw  5, 50, 95, 140, 185, 230, 275, 320, 365, 410
-    dummycol      dw  ?
-    dummyrow      dw  ?
+    numRows             dw  8                                                                                     ; 2 * real number of rows
+    rowStart            dw  20, 35, 50, 65, 80, 95, 110, 125, 140, 155
+    numCols             dw  14                                                                                    ; 2 * real number of cols
+    colStart            dw  5, 50, 95, 140, 185, 230, 275, 320, 365, 410
+    dummycol            dw  ?
+    dummyrow            dw  ?
     ;Bricks existence
-    bricks        dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    bricks              dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
     ;Brick dimensions
-    rwidth        dw  40
-    rheight       dw  10
+    rwidth              dw  40
+    rheight             dw  10
 
 
 .CODE
@@ -174,10 +176,11 @@ DrawBall ENDP
     end_early:          
                         ret
 MoveBall PROC
-                        inc  diffeculty
-                        cmp  diffeculty, 01fh
+                        dec  difficulty
+                        cmp  difficulty, 0
                         jne  end_early
-                        mov  diffeculty, 0
+                        mov  al, original_difficulty
+                        mov  difficulty, al
                         mov  ax, ball_x
                         add  ax, ball_dx
                         mov  ball_x, ax
@@ -274,7 +277,19 @@ ResetAll PROC
                         mov  padel_y1, 187
                         mov  padel_y2, 190
                         CALL ClearScreen
+                        cmp  selected_level, 1
+                        jnz  cont1
                         CALL DrawLevel1
+                        jmp  cont
+    cont1:              
+                        cmp  selected_level, 2
+                        jnz  cont2
+                        CALL DrawLevel2
+                        jmp  cont
+    cont2:              
+                        cmp  selected_level, 3
+                        CALL DrawLevel3
+    cont:               
                         CALL DrawPadel
                         mov  ball_color, 2
                         CALL DrawBall
@@ -283,37 +298,37 @@ ResetAll PROC
                         RET
 ResetAll ENDP
 
-DrawRectangle PROC 
-                                                        ;to calculate final column
-                        mov dx,rowStart[di]           ;set row start of each rectangle
-                        mov ah,0ch                    ;command to draw pixel
+DrawRectangle PROC
+    ;to calculate final column
+                        mov  dx,rowStart[di]              ;set row start of each rectangle
+                        mov  ah,0ch                       ;command to draw pixel
                          
-                        mov bx, rheight               ; bx = height
-                        add bx, dx                    ; bx = height + row = final row to draw in
-                        mov dummyrow, bx              ;dummyrow now holds the final row
+                        mov  bx, rheight                  ; bx = height
+                        add  bx, dx                       ; bx = height + row = final row to draw in
+                        mov  dummyrow, bx                 ;dummyrow now holds the final row
  
-                                                        ;to calculate final column
-                        mov bx, rwidth                ;bx = rectangle wdith 
-                        add bx, colStart[si]          ;bx += column start
-                        mov dummycol, bx              ;dummycol now has the final column to draw
+    ;to calculate final column
+                        mov  bx, rwidth                   ;bx = rectangle wdith
+                        add  bx, colStart[si]             ;bx += column start
+                        mov  dummycol, bx                 ;dummycol now has the final column to draw
         
-        height_loop:                                    ;draws pixels along the height (rows)
-                        mov cx,colStart[si]           
+    height_loop:                                          ;draws pixels along the height (rows)
+                        mov  cx,colStart[si]
 
-        width_loop:     int 10h                      ;draws pixels along the width (columns) for one row
-                        inc cx
-                        cmp cx, dummycol
-                        jnz width_loop  
+    width_loop:         int  10h                          ;draws pixels along the width (columns) for one row
+                        inc  cx
+                        cmp  cx, dummycol
+                        jnz  width_loop
                                                  
 
-                        inc dx
-                        cmp dx, dummyrow
-                        jnz height_loop
+                        inc  dx
+                        cmp  dx, dummyrow
+                        jnz  height_loop
                         ret
 DrawRectangle ENDP
 
 DrawRow proc
-                        mov  si, 0                     ; si is col-index
+                        mov  si, 0                        ; si is col-index
                         mov  al, 0
                         mov  dl, al
 
@@ -327,57 +342,67 @@ DrawRow proc
                         mov  dx, ax
                         mov  dx, bricks[bx]
                         pop  ax
-                        inc  al                        ;change color of each rectangle
+                        inc  al                           ;change color of each rectangle
                         cmp  dx, 1
                         jne  dont_draw
                         call DrawRectangle
     dont_draw:          
-                        add  si, 2                     ; Move to the next rectangle
+                        add  si, 2                        ; Move to the next rectangle
                         cmp  si, numCols
                         jnz  draw_loop
                         ret
 DrawRow ENDP
 
 DrawLevel1 proc
-                        mov  di, 0                     ; di is row-index
-                        mov numRows, 8
-                        mov numCols, 14
+                        mov  di, 0                        ; di is row-index
+                        mov  numRows, 8
+                        mov  numCols, 14
+                        mov  difficulty, 01fh
+                        mov  original_difficulty, 01fh
+                        mov  selected_level, 1
     rows_loop:          
                         call DrawRow
-                        add  di,2                      ;move 2 bytes to second element
+                        add  di,2                         ;move 2 bytes to second element
                         cmp  di, numRows
                         jnz  rows_loop
                         ret
 DrawLevel1 endp
 
 DrawLevel2 proc
-                        mov  di, 0                     ; di is row-index
-                        mov numRows, 14
-                        mov numCols, 16
-                        mov rwidth, 20
+                        mov  di, 0                        ; di is row-index
+                        mov  numRows, 14
+                        mov  numCols, 16
+                        mov  rwidth, 20
+                        mov  difficulty, 0dh
+                        mov  original_difficulty, 0dh
+                        mov  selected_level, 2
 
-    lvl2:           
+
+    lvl2:               
                         call DrawRow
-                        add  di,2                      ;move 2 bytes to second element
+                        add  di,2                         ;move 2 bytes to second element
                         cmp  di, numRows
                         jnz  lvl2
                         ret
 
 DrawLevel2 endp
 
-DarwLevel3 proc
-                        mov  di, 0                     ; di is row-index
-                        mov numRows, 20
-                        mov numCols, 20
-                        mov rwidth, 10
+DrawLevel3 proc
+                        mov  di, 0                        ; di is row-index
+                        mov  numRows, 20
+                        mov  numCols, 20
+                        mov  rwidth, 10
+                        mov  difficulty, 09h
+                        mov  original_difficulty, 09h
+                        mov  selected_level, 3
 
-    lvl3:           
+    lvl3:               
                         call DrawRow
-                        add  di,2                      ;move 2 bytes to second element
+                        add  di,2                         ;move 2 bytes to second element
                         cmp  di, numRows
                         jnz  lvl3
                         ret
-DarwLevel3 endp
+DrawLevel3 endp
 
 Collision proc
                         push ax
@@ -387,9 +412,9 @@ Collision proc
                         push di
                         push si
 
-                        mov  di, 0                     ; di is row-index
+                        mov  di, 0                        ; di is row-index
     collision_loop1:    
-                        mov  si, 0                     ; si is col-index
+                        mov  si, 0                        ; si is col-index
                         mov  ax, di
                         mov  cx, 7
                         mul  cx
@@ -401,11 +426,11 @@ Collision proc
                         jne  no_brick
                         call CheckCollision
     no_brick:           
-                        add  si, 2                     ; Move to the next rectangle
+                        add  si, 2                        ; Move to the next rectangle
                         cmp  si, numCols
                         jne  collision_loop2
 
-                        add  di,2                      ;move 2 bytes to second element
+                        add  di,2                         ;move 2 bytes to second element
                         cmp  di, numRows
                         jne  collision_loop1
 
@@ -484,13 +509,13 @@ MAIN PROC
                         MOV  AX, @DATA
                         MOV  DS, AX
 
-                        MOV  AH, 0                     ;following 3 lines to enter graphic mode
+                        MOV  AH, 0                        ;following 3 lines to enter graphic mode
                         MOV  AL, 13h
                         INT  10h
 
                         call DrawLevel1
-                        ; call DrawLevel2
-                        ; call DarwLevel3
+    ;call DrawLevel2
+    ;call DrawLevel3
 
     gameLoop:           
                         CALL Collision
@@ -515,18 +540,18 @@ beep proc
                         push bx
                         push cx
                         push dx
-                        mov  al, 182                   ; Prepare the speaker for the
-                        out  43h, al                   ;  note.
-                        mov  ax, 400                   ; Frequency number (in decimal)
+                        mov  al, 182                      ; Prepare the speaker for the
+                        out  43h, al                      ;  note.
+                        mov  ax, 400                      ; Frequency number (in decimal)
     ;  for middle C.
-                        out  42h, al                   ; Output low byte.
-                        mov  al, ah                    ; Output high byte.
+                        out  42h, al                      ; Output low byte.
+                        mov  al, ah                       ; Output high byte.
                         out  42h, al
-                        in   al, 61h                   ; Turn on note (get value from
+                        in   al, 61h                      ; Turn on note (get value from
     ;  port 61h).
-                        or   al, 00000011b             ; Set bits 1 and 0.
-                        out  61h, al                   ; Send new value.
-                        mov  bx, 2                     ; Pause for duration of note.
+                        or   al, 00000011b                ; Set bits 1 and 0.
+                        out  61h, al                      ; Send new value.
+                        mov  bx, 2                        ; Pause for duration of note.
 .pause1:
                         mov  cx, 65535
 .pause2:
@@ -534,10 +559,10 @@ beep proc
                         jne  .pause2
                         dec  bx
                         jne  .pause1
-                        in   al, 61h                   ; Turn off note (get value from
+                        in   al, 61h                      ; Turn off note (get value from
     ;  port 61h).
-                        and  al, 11111100b             ; Reset bits 1 and 0.
-                        out  61h, al                   ; Send new value.
+                        and  al, 11111100b                ; Reset bits 1 and 0.
+                        out  61h, al                      ; Send new value.
 
                         pop  dx
                         pop  cx
