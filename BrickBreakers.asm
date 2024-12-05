@@ -22,10 +22,11 @@
     
     ;Bricks number of rows and columns
     numRows       dw  8                                                                                     ; 2 * real number of rows
-    rowStart      dw  20, 35, 50, 65
+    rowStart      dw  20, 35, 50, 65, 80, 95, 110, 125, 140, 155
     numCols       dw  14                                                                                    ; 2 * real number of cols
-    colStart      dw  5, 50, 95, 140, 185, 230, 275
-    
+    colStart      dw  5, 50, 95, 140, 185, 230, 275, 320, 365, 410
+    dummycol      dw  ?
+    dummyrow      dw  ?
     ;Bricks existence
     bricks        dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
@@ -282,35 +283,33 @@ ResetAll PROC
                         RET
 ResetAll ENDP
 
-DrawRectangle PROC
-                        mov  dx,rowStart[di]           ;set row start of each rectangle
-                        mov  ah,0ch                    ;command to draw pixel
-    lp:                 
-                        mov  cx,colStart[si]           ;(row,col)
+DrawRectangle PROC 
+                                                        ;to calculate final column
+                        mov dx,rowStart[di]           ;set row start of each rectangle
+                        mov ah,0ch                    ;command to draw pixel
+                         
+                        mov bx, rheight               ; bx = height
+                        add bx, dx                    ; bx = height + row = final row to draw in
+                        mov dummyrow, bx              ;dummyrow now holds the final row
+ 
+                                                        ;to calculate final column
+                        mov bx, rwidth                ;bx = rectangle wdith 
+                        add bx, colStart[si]          ;bx += column start
+                        mov dummycol, bx              ;dummycol now has the final column to draw
+        
+        height_loop:                                    ;draws pixels along the height (rows)
+                        mov cx,colStart[si]           
 
-                        mov  bx,rwidth                 ;set counter
-    draw_t:             int  10h
-                        inc  cx
-                        dec  bx
-                        cmp  bx, 0
-                        jnz  draw_t
-                        
-                        mov  cx, colStart[si]
-                        inc  dx
+        width_loop:     int 10h                      ;draws pixels along the width (columns) for one row
+                        inc cx
+                        cmp cx, dummycol
+                        jnz width_loop  
+                                                 
 
-                        mov  bx,rwidth                 ;set counter
-    draw_b:             int  10h
-                        inc  cx
-                        dec  bx
-                        cmp  bx, 0
-                        jnz  draw_b
-
-                        inc  dx
-                        mov  cx, rowStart[di]
-                        add  cx, rheight
-                        cmp  dx, cx
-                        jnz  lp
-                        RET
+                        inc dx
+                        cmp dx, dummyrow
+                        jnz height_loop
+                        ret
 DrawRectangle ENDP
 
 DrawRow proc
@@ -341,6 +340,8 @@ DrawRow ENDP
 
 DrawLevel1 proc
                         mov  di, 0                     ; di is row-index
+                        mov numRows, 8
+                        mov numCols, 14
     rows_loop:          
                         call DrawRow
                         add  di,2                      ;move 2 bytes to second element
@@ -348,6 +349,35 @@ DrawLevel1 proc
                         jnz  rows_loop
                         ret
 DrawLevel1 endp
+
+DrawLevel2 proc
+                        mov  di, 0                     ; di is row-index
+                        mov numRows, 14
+                        mov numCols, 16
+                        mov rwidth, 20
+
+    lvl2:           
+                        call DrawRow
+                        add  di,2                      ;move 2 bytes to second element
+                        cmp  di, numRows
+                        jnz  lvl2
+                        ret
+
+DrawLevel2 endp
+
+DarwLevel3 proc
+                        mov  di, 0                     ; di is row-index
+                        mov numRows, 20
+                        mov numCols, 20
+                        mov rwidth, 10
+
+    lvl3:           
+                        call DrawRow
+                        add  di,2                      ;move 2 bytes to second element
+                        cmp  di, numRows
+                        jnz  lvl3
+                        ret
+DarwLevel3 endp
 
 Collision proc
                         push ax
@@ -459,6 +489,8 @@ MAIN PROC
                         INT  10h
 
                         call DrawLevel1
+                        ; call DrawLevel2
+                        ; call DarwLevel3
 
     gameLoop:           
                         CALL Collision
