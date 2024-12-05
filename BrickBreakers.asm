@@ -3,49 +3,54 @@
 .STACK 100h
 
 .DATA
-    padel_x1          DW  135
-    padel_x2          DW  185
-    padel_y1          DW  187
-    padel_y2          DW  190
-    padel_color       db  4
-    padel_speed       equ 7
+    padel_x1            DW  135
+    padel_x2            DW  185
+    padel_y1            DW  187
+    padel_y2            DW  190
+    padel_color         db  4
+    padel_speed         equ 7
 
-    ball_x            DW  160
-    ball_y            DW  180
-    ball_dx           DW  0
-    ball_dy           DW  2
-    ball_og_speed     equ 2
-    ball_size         equ 3
-    divide_factor     equ 10
-    ball_color        db  2
-    diffeculty        db  0
-    
+    ball_x              DW  160
+    ball_y              DW  180
+    ball_dx             DW  0
+    ball_dy             DW  2
+    ball_og_speed       equ 2
+    ball_size           equ 3
+    divide_factor       equ 10
+    ball_color          db  2
+    difficulty          db  0
+    original_difficulty db  0
+
+    selected_level      db  0
     ;Bricks number of rows and columns
-    numRows           dw  8                                                                                     ; 2 * real number of rows
-    rowStart          dw  20, 35, 50, 65
-    numCols           dw  14                                                                                    ; 2 * real number of cols
-    colStart          dw  5, 50, 95, 140, 185, 230, 275
-    
+    numRows             dw  8                                                                                     ; 2 * real number of rows
+    rowStart            dw  20, 35, 50, 65, 80, 95, 110, 125, 140, 155
+    numCols             dw  14                                                                                    ; 2 * real number of cols
+    colStart            dw  5, 50, 95, 140, 185, 230, 275, 320, 365, 410
+    dummycol            dw  ?
+    dummyrow            dw  ?
     ;Bricks existence
-    bricks            dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    bricks              dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
     ;Brick dimensions
-    rwidth            dw  40
-    rheight           dw  10
-    
+    rwidth              dw  40
+    rheight             dw  10
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Brick gifts
-    gift_dy           dw  2
-    gift_size         equ 10
-    gift_speed        equ 10
-    gift_color        db  2
-    ribbon_color      db  4
-    bow_color         db  6
-    gift_count        dw  5
-    backgournd_color  db  5 dup(0)                                                                              ; Max number of gifts
-    gift_active       db  5 dup(0)                                                                              ; 1 if gift is active, 0 otherwise
-    gift_x_list       dw  5 dup(0)                                                                              ; X positions of gifts
-    gift_y_list       dw  5 dup(0)                                                                              ; Y positions of gifts
-    gift_counter_list dw  5 dup(gift_speed)                                                                             ; Counters for each gift
+    gift_dy             dw  2
+    gift_size           equ 10
+    gift_speed          equ 10
+    gift_color          db  2
+    ribbon_color        db  4
+    bow_color           db  6
+    gift_count          dw  5
+    backgournd_color    db  5 dup(0)                                                                              ; Max number of gifts
+    gift_active         db  5 dup(0)                                                                              ; 1 if gift is active, 0 otherwise
+    gift_x_list         dw  5 dup(0)                                                                              ; X positions of gifts
+    gift_y_list         dw  5 dup(0)                                                                              ; Y positions of gifts
+    gift_counter_list   dw  5 dup(gift_speed)                                                                     ; Counters for each gift
+
 
 
 .CODE
@@ -188,10 +193,11 @@ DrawBall ENDP
     end_early:          
                         ret
 MoveBall PROC
-                        inc  diffeculty
-                        cmp  diffeculty, 01fh
+                        dec  difficulty
+                        cmp  difficulty, 0
                         jne  end_early
-                        mov  diffeculty, 0
+                        mov  al, original_difficulty
+                        mov  difficulty, al
                         mov  ax, ball_x
                         add  ax, ball_dx
                         mov  ball_x, ax
@@ -288,7 +294,19 @@ ResetAll PROC
                         mov  padel_y1, 187
                         mov  padel_y2, 190
                         CALL ClearScreen
+                        cmp  selected_level, 1
+                        jnz  cont1
                         CALL DrawLevel1
+                        jmp  cont
+    cont1:              
+                        cmp  selected_level, 2
+                        jnz  cont2
+                        CALL DrawLevel2
+                        jmp  cont
+    cont2:              
+                        cmp  selected_level, 3
+                        CALL DrawLevel3
+    cont:               
                         CALL DrawPadel
                         mov  ball_color, 2
                         CALL DrawBall
@@ -310,10 +328,10 @@ DrawGift PROC
                         push cx
                         push dx
                         mov  si, 0
-    DrawColumnG:           
+    DrawColumnG:        
                         push cx
                         mov  di, 0
-    DrawRowG:        
+    DrawRowG:           
                         mov  ah, 0Ch
                         mov  al, gift_color
                         int  10h
@@ -429,34 +447,32 @@ MoveGift ENDP
 
 
 DrawRectangle PROC
+    ;to calculate final column
                         mov  dx,rowStart[di]                 ;set row start of each rectangle
                         mov  ah,0ch                          ;command to draw pixel
-    lp:                 
-                        mov  cx,colStart[si]                 ;(row,col)
+                         
+                        mov  bx, rheight                     ; bx = height
+                        add  bx, dx                          ; bx = height + row = final row to draw in
+                        mov  dummyrow, bx                    ;dummyrow now holds the final row
+ 
+    ;to calculate final column
+                        mov  bx, rwidth                      ;bx = rectangle wdith
+                        add  bx, colStart[si]                ;bx += column start
+                        mov  dummycol, bx                    ;dummycol now has the final column to draw
+        
+    height_loop:                                             ;draws pixels along the height (rows)
+                        mov  cx,colStart[si]
 
-                        mov  bx,rwidth                       ;set counter
-    draw_t:             int  10h
+    width_loop:         int  10h                             ;draws pixels along the width (columns) for one row
                         inc  cx
-                        dec  bx
-                        cmp  bx, 0
-                        jnz  draw_t
-                        
-                        mov  cx, colStart[si]
-                        inc  dx
-
-                        mov  bx,rwidth                       ;set counter
-    draw_b:             int  10h
-                        inc  cx
-                        dec  bx
-                        cmp  bx, 0
-                        jnz  draw_b
+                        cmp  cx, dummycol
+                        jnz  width_loop
+                                                 
 
                         inc  dx
-                        mov  cx, rowStart[di]
-                        add  cx, rheight
-                        cmp  dx, cx
-                        jnz  lp
-                        RET
+                        cmp  dx, dummyrow
+                        jnz  height_loop
+                        ret
 DrawRectangle ENDP
 
 DrawRow proc
@@ -487,6 +503,11 @@ DrawRow ENDP
 
 DrawLevel1 proc
                         mov  di, 0                           ; di is row-index
+                        mov  numRows, 8
+                        mov  numCols, 14
+                        mov  difficulty, 01fh
+                        mov  original_difficulty, 01fh
+                        mov  selected_level, 1
     rows_loop:          
                         call DrawRow
                         add  di,2                            ;move 2 bytes to second element
@@ -494,6 +515,42 @@ DrawLevel1 proc
                         jnz  rows_loop
                         ret
 DrawLevel1 endp
+
+DrawLevel2 proc
+                        mov  di, 0                           ; di is row-index
+                        mov  numRows, 14
+                        mov  numCols, 16
+                        mov  rwidth, 20
+                        mov  difficulty, 0dh
+                        mov  original_difficulty, 0dh
+                        mov  selected_level, 2
+
+
+    lvl2:               
+                        call DrawRow
+                        add  di,2                            ;move 2 bytes to second element
+                        cmp  di, numRows
+                        jnz  lvl2
+                        ret
+
+DrawLevel2 endp
+
+DrawLevel3 proc
+                        mov  di, 0                           ; di is row-index
+                        mov  numRows, 20
+                        mov  numCols, 20
+                        mov  rwidth, 10
+                        mov  difficulty, 09h
+                        mov  original_difficulty, 09h
+                        mov  selected_level, 3
+
+    lvl3:               
+                        call DrawRow
+                        add  di,2                            ;move 2 bytes to second element
+                        cmp  di, numRows
+                        jnz  lvl3
+                        ret
+DrawLevel3 endp
 
 Collision proc
                         push ax
@@ -636,7 +693,9 @@ MAIN PROC
                         MOV  AL, 13h
                         INT  10h
 
-                        call DrawLevel1
+                        ;call DrawLevel1
+    ;call DrawLevel2
+    call DrawLevel3
 
     gameLoop:           
                         CALL Collision
@@ -653,16 +712,16 @@ MAIN PROC
                         push bx
 
 
-                        mov gift_color, 0
-                        mov bow_color, 0
-                        mov ribbon_color, 0
+                        mov  gift_color, 0
+                        mov  bow_color, 0
+                        mov  ribbon_color, 0
 
                         CALL DrawGift
                         CALL MoveGift
 
-                        mov gift_color, 2
-                        mov bow_color, 4
-                        mov ribbon_color, 6
+                        mov  gift_color, 2
+                        mov  bow_color, 4
+                        mov  ribbon_color, 6
 
                         pop  bx
 
