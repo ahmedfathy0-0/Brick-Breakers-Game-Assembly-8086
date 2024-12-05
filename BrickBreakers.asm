@@ -3,35 +3,49 @@
 .STACK 100h
 
 .DATA
-    padel_x1      DW  135
-    padel_x2      DW  185
-    padel_y1      DW  187
-    padel_y2      DW  190
-    padel_color   db  4
-    padel_speed   equ 7
+    padel_x1          DW  135
+    padel_x2          DW  185
+    padel_y1          DW  187
+    padel_y2          DW  190
+    padel_color       db  4
+    padel_speed       equ 7
 
-    ball_x        DW  160
-    ball_y        DW  180
-    ball_dx       DW  0
-    ball_dy       DW  2
-    ball_og_speed equ 2
-    ball_size     equ 3
-    divide_factor equ 10
-    ball_color    db  2
-    diffeculty    db  0
+    ball_x            DW  160
+    ball_y            DW  180
+    ball_dx           DW  0
+    ball_dy           DW  2
+    ball_og_speed     equ 2
+    ball_size         equ 3
+    divide_factor     equ 10
+    ball_color        db  2
+    diffeculty        db  0
     
     ;Bricks number of rows and columns
-    numRows       dw  8                                                                                     ; 2 * real number of rows
-    rowStart      dw  20, 35, 50, 65
-    numCols       dw  14                                                                                    ; 2 * real number of cols
-    colStart      dw  5, 50, 95, 140, 185, 230, 275
+    numRows           dw  8                                                                                     ; 2 * real number of rows
+    rowStart          dw  20, 35, 50, 65
+    numCols           dw  14                                                                                    ; 2 * real number of cols
+    colStart          dw  5, 50, 95, 140, 185, 230, 275
     
     ;Bricks existence
-    bricks        dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    bricks            dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 
     ;Brick dimensions
-    rwidth        dw  40
-    rheight       dw  10
+    rwidth            dw  40
+    rheight           dw  10
+    
+    ;Brick gifts
+    gift_dy           dw  2
+    gift_size         equ 10
+    gift_speed        equ 10
+    gift_color        db  2
+    ribbon_color      db  4
+    bow_color         db  6
+    gift_count        dw  5
+    backgournd_color  db  5 dup(0)                                                                              ; Max number of gifts
+    gift_active       db  5 dup(0)                                                                              ; 1 if gift is active, 0 otherwise
+    gift_x_list       dw  5 dup(0)                                                                              ; X positions of gifts
+    gift_y_list       dw  5 dup(0)                                                                              ; Y positions of gifts
+    gift_counter_list dw  5 dup(gift_speed)                                                                             ; Counters for each gift
 
 
 .CODE
@@ -100,6 +114,7 @@ DrawPadel PROC
     end_Draw:           
                         RET
 DrawPadel ENDP
+
 
 MovePadel PROC
                         mov  ah, 1
@@ -281,14 +296,145 @@ ResetAll PROC
                         int  16h
                         RET
 ResetAll ENDP
+DrawGift PROC
+    ; Check if PowerUp is active
+                        mov  si, bx                          ; Load gift index into SI
+                        cmp  [gift_active+si], 0             ; Check if the gift is active
+                        je   SkipDrawing                     ; Skip if not active
+
+
+    ; Use calculated offsets to access gift_x_list and gift_y_list
+                        mov  cx, [gift_x_list+bx]            ; Get X position of the gift
+                        mov  dx, [gift_y_list+bx]            ; Get Y position of the gift
+                        mov  bx, gift_size                   ; Load the gift size
+                        push cx
+                        push dx
+                        mov  si, 0
+    DrawColumnG:           
+                        push cx
+                        mov  di, 0
+    DrawRowG:        
+                        mov  ah, 0Ch
+                        mov  al, gift_color
+                        int  10h
+
+                        inc  cx
+                        inc  di
+                        cmp  di, bx
+                        jl   DrawRowG
+                        pop  cx
+                        inc  dx
+                        inc  si
+                        cmp  si, bx
+                        jl   DrawColumnG
+                        pop  dx
+                        pop  cx
+                        push cx
+                        push dx
+
+    ; Draw horizontal ribbon
+                        mov  si, gift_size
+                        shr  si, 1
+                        add  dx, si
+                        mov  di, 0
+    RibbonHorizontal:   
+                        mov  ah, 0Ch
+                        mov  al, ribbon_color                ; Color for ribbon (e.g., Red)
+                        int  10h
+
+                        inc  cx
+                        inc  di
+                        cmp  di, bx
+                        jl   RibbonHorizontal
+
+    ; Draw vertical ribbon
+                        pop  dx
+                        pop  cx
+                        push cx
+                        push dx
+                        add  cx, si
+                        mov  di, 0
+    RibbonVertical:     
+    ; Set pixel for ribbon (Vertical)
+
+                        mov  ah, 0Ch
+                        mov  al, ribbon_color
+                        int  10h
+
+                        inc  dx
+                        inc  di
+                        cmp  di, bx
+                        jl   RibbonVertical
+
+    ; Draw bow (top decoration)
+                        pop  dx
+                        pop  cx
+                        mov  di, 0
+    DrawBow:            
+                        mov  ah, 0Ch
+                        mov  al, bow_color
+                        int  10h
+
+                        inc  cx
+                        inc  di
+                        cmp  di, gift_size
+                        jl   DrawBow
+    SkipDrawing:        
+
+                        RET
+DrawGift ENDP
+
+MoveGift PROC
+                        mov  cx, gift_count
+                        xor  bx, bx
+
+    LoopMoveGifts:      
+                        cmp  bx, cx
+                        jge  EndMove
+
+    ; Calculate offset for current gift
+                        mov  ax, bx
+                        shl  ax, 1
+                        mov  si, ax
+
+    ; Check if gift is active
+                        cmp  [gift_active+bx], 0             ; Is the gift active?
+                        je   SkipGift
+
+    ; Decrement counter
+                        dec  [gift_counter_list+si]          ; Decrement gift's counter
+                        jnz  SkipGift
+
+    ; Reset counter
+                        mov  ax, gift_speed
+                        mov  [gift_counter_list+si], ax
+
+    ; Move gift down
+                        mov  ax, [gift_y_list+si]
+                        add  ax, gift_dy
+                        mov  [gift_y_list+si], ax            ; Update Y position
+
+    ; Deactivate if out of bounds
+                        cmp  ax, 190                         ; Check if gift is out of bounds
+                        jl   SkipGift
+                        mov  byte ptr [gift_active+bx], 0
+
+    SkipGift:           
+                        inc  bx                              ; Move to the next gift index
+                        jmp  LoopMoveGifts
+
+    EndMove:            
+                        ret
+MoveGift ENDP
+
 
 DrawRectangle PROC
-                        mov  dx,rowStart[di]           ;set row start of each rectangle
-                        mov  ah,0ch                    ;command to draw pixel
+                        mov  dx,rowStart[di]                 ;set row start of each rectangle
+                        mov  ah,0ch                          ;command to draw pixel
     lp:                 
-                        mov  cx,colStart[si]           ;(row,col)
+                        mov  cx,colStart[si]                 ;(row,col)
 
-                        mov  bx,rwidth                 ;set counter
+                        mov  bx,rwidth                       ;set counter
     draw_t:             int  10h
                         inc  cx
                         dec  bx
@@ -298,7 +444,7 @@ DrawRectangle PROC
                         mov  cx, colStart[si]
                         inc  dx
 
-                        mov  bx,rwidth                 ;set counter
+                        mov  bx,rwidth                       ;set counter
     draw_b:             int  10h
                         inc  cx
                         dec  bx
@@ -314,7 +460,7 @@ DrawRectangle PROC
 DrawRectangle ENDP
 
 DrawRow proc
-                        mov  si, 0                     ; si is col-index
+                        mov  si, 0                           ; si is col-index
                         mov  al, 0
                         mov  dl, al
 
@@ -328,22 +474,22 @@ DrawRow proc
                         mov  dx, ax
                         mov  dx, bricks[bx]
                         pop  ax
-                        inc  al                        ;change color of each rectangle
+                        inc  al                              ;change color of each rectangle
                         cmp  dx, 1
                         jne  dont_draw
                         call DrawRectangle
     dont_draw:          
-                        add  si, 2                     ; Move to the next rectangle
+                        add  si, 2                           ; Move to the next rectangle
                         cmp  si, numCols
                         jnz  draw_loop
                         ret
 DrawRow ENDP
 
 DrawLevel1 proc
-                        mov  di, 0                     ; di is row-index
+                        mov  di, 0                           ; di is row-index
     rows_loop:          
                         call DrawRow
-                        add  di,2                      ;move 2 bytes to second element
+                        add  di,2                            ;move 2 bytes to second element
                         cmp  di, numRows
                         jnz  rows_loop
                         ret
@@ -357,9 +503,9 @@ Collision proc
                         push di
                         push si
 
-                        mov  di, 0                     ; di is row-index
+                        mov  di, 0                           ; di is row-index
     collision_loop1:    
-                        mov  si, 0                     ; si is col-index
+                        mov  si, 0                           ; si is col-index
                         mov  ax, di
                         mov  cx, 7
                         mul  cx
@@ -371,11 +517,11 @@ Collision proc
                         jne  no_brick
                         call CheckCollision
     no_brick:           
-                        add  si, 2                     ; Move to the next rectangle
+                        add  si, 2                           ; Move to the next rectangle
                         cmp  si, numCols
                         jne  collision_loop2
 
-                        add  di,2                      ;move 2 bytes to second element
+                        add  di,2                            ;move 2 bytes to second element
                         cmp  di, numRows
                         jne  collision_loop1
 
@@ -418,7 +564,6 @@ CheckCollision proc
                         mov  bx, ax
                         add  bx, si
                         mov  bricks[bx], 0
-
                         CALL beep
                         CALL ClearBrick
 
@@ -437,9 +582,10 @@ ClearBrick proc near
                         push dx
                         push di
                         push si
-    
+
                         mov  al, 0
                         call DrawRectangle
+                        CALL SpawnGift
     
                         pop  si
                         pop  di
@@ -449,12 +595,44 @@ ClearBrick proc near
                         pop  ax
                         ret
 ClearBrick endp
+SpawnGift PROC
+    ; Find an inactive gift slot
+                        mov  cx, gift_count                  ; Load the total number of gifts
+                        xor  bx, bx                          ; BX = index of current gift
+
+    FindSlot:           
+                        cmp  bx, cx                          ; Check if all slots are checked
+                        jge  NoSlotAvailable                 ; No slot available if BX >= gift_count
+
+                        cmp  [gift_active+bx], 0             ; Check if the gift slot is inactive
+                        je   ActivateGift                    ; If inactive, activate the slot
+                        inc  bx                              ; Move to the next gift slot
+                        jmp  FindSlot
+
+    ActivateGift:       
+    ; Calculate offset for the current gift slot
+                        mov  ax, bx                          ; Load BX (gift index) into AX
+                        shl  ax, 1                           ; Multiply BX by 2 (shift left by 1)
+                        mov  si, ax                          ; Store result in SI (offset)
+
+    ; Activate gift and set initial position
+                        mov  byte ptr [gift_active+bx], 1    ; Mark the slot as active
+                        mov  ax, ball_x                      ; Example spawn X position
+                        mov  [gift_x_list+si], ax            ; Set X position
+                        mov  ax, ball_y                      ; Example spawn Y position
+                        mov  [gift_y_list+si], ax            ; Set Y position
+                        ret
+
+    NoSlotAvailable:    
+                        ret
+SpawnGift ENDP
+
 
 MAIN PROC
                         MOV  AX, @DATA
                         MOV  DS, AX
 
-                        MOV  AH, 0                     ;following 3 lines to enter graphic mode
+                        MOV  AH, 0                           ;following 3 lines to enter graphic mode
                         MOV  AL, 13h
                         INT  10h
 
@@ -464,13 +642,35 @@ MAIN PROC
                         CALL Collision
                         CALL DrawPadel
                         CALL MovePadel
-
                         mov  ball_color, 0
                         call DrawBall
-
                         call MoveBall
                         mov  ball_color, 2
                         call DrawBall
+                        xor  bx, bx
+                        mov  cx, gift_count
+                        cmp  bx, cx
+                        push bx
+
+
+                        mov gift_color, 0
+                        mov bow_color, 0
+                        mov ribbon_color, 0
+
+                        CALL DrawGift
+                        CALL MoveGift
+
+                        mov gift_color, 2
+                        mov bow_color, 4
+                        mov ribbon_color, 6
+
+                        pop  bx
+
+                        
+                        CALL DrawGift
+
+                        inc  bx
+                        
 
                         JMP  gameLoop
 
@@ -483,18 +683,19 @@ beep proc
                         push bx
                         push cx
                         push dx
-                        mov  al, 182                   ; Prepare the speaker for the
-                        out  43h, al                   ;  note.
-                        mov  ax, 400                   ; Frequency number (in decimal)
+                        neg  ball_dy
+                        mov  al, 182                         ; Prepare the speaker for the
+                        out  43h, al                         ;  note.
+                        mov  ax, 400                         ; Frequency number (in decimal)
     ;  for middle C.
-                        out  42h, al                   ; Output low byte.
-                        mov  al, ah                    ; Output high byte.
+                        out  42h, al                         ; Output low byte.
+                        mov  al, ah                          ; Output high byte.
                         out  42h, al
-                        in   al, 61h                   ; Turn on note (get value from
+                        in   al, 61h                         ; Turn on note (get value from
     ;  port 61h).
-                        or   al, 00000011b             ; Set bits 1 and 0.
-                        out  61h, al                   ; Send new value.
-                        mov  bx, 2                     ; Pause for duration of note.
+                        or   al, 00000011b                   ; Set bits 1 and 0.
+                        out  61h, al                         ; Send new value.
+                        mov  bx, 2                           ; Pause for duration of note.
 .pause1:
                         mov  cx, 65535
 .pause2:
@@ -502,10 +703,10 @@ beep proc
                         jne  .pause2
                         dec  bx
                         jne  .pause1
-                        in   al, 61h                   ; Turn off note (get value from
+                        in   al, 61h                         ; Turn off note (get value from
     ;  port 61h).
-                        and  al, 11111100b             ; Reset bits 1 and 0.
-                        out  61h, al                   ; Send new value.
+                        and  al, 11111100b                   ; Reset bits 1 and 0.
+                        out  61h, al                         ; Send new value.
 
                         pop  dx
                         pop  cx
