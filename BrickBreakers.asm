@@ -21,20 +21,33 @@
     difficulty          db  0
     original_difficulty db  0
 
-    selected_level      db  0
     ;Bricks number of rows and columns
-    numRows             dw  8                                                                                     ; 2 * real number of rows
-    rowStart            dw  20, 35, 50, 65, 80, 95, 110, 125, 140, 155
-    numCols             dw  14                                                                                    ; 2 * real number of cols
-    colStart            dw  5, 50, 95, 140, 185, 230, 275, 320, 365, 410
+    numRows             dw  8                                                                                                                                                                                                                                                                                                             ; 2 * real number of rows
+    rowStart            dw  5, 20, 35, 50, 65, 80, 95, 110, 125, 140
+
+    numCols             dw  14                                                                                                                                                                                                                                                                                                            ; 2 * real number of cols
+    colStart1           dw  5, 50, 95, 140, 185, 230, 275, 320, 365, 410
+    colStart2           dw  5, 30, 55, 80, 105, 130, 155, 180, 205, 230, 255, 280
+    colStart3           dw  5, 20, 35, 50, 65, 80, 95, 110, 125, 140, 155, 170, 185, 200, 215, 230, 245, 260, 275, 290, 305
+
     dummycol            dw  ?
     dummyrow            dw  ?
     ;Bricks existence
-    bricks              dw  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    bricks              dw  210 DUP(1)          ; max num of bricks in a level (lvl 3)                                                                                                                                                                                                                                                                                              ; 2 * numRows * numCols
+    ; bricks              dw  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1                                                                                                                                                                                                                                                                                         ; 2 * numRows * numCols
 
     ;Brick dimensions
     rwidth              dw  40
     rheight             dw  10
+
+    ;score & level
+    score               dw  0
+    selected_level      db  0
+
+    score1              equ 28  ; 4 * 7
+    score2              equ 112 ; 4 * 7 + 7 * 12
+    score3              equ 322 ; 4 * 7 + 7 * 12 + 10 * 21
+
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Brick gifts
@@ -45,11 +58,11 @@
     ribbon_color        db  4
     bow_color           db  6
     gift_count          dw  5
-    backgournd_color    db  5 dup(0)                                                                              ; Max number of gifts
-    gift_active         db  5 dup(0)                                                                              ; 1 if gift is active, 0 otherwise
-    gift_x_list         dw  5 dup(0)                                                                              ; X positions of gifts
-    gift_y_list         dw  5 dup(0)                                                                              ; Y positions of gifts
-    gift_counter_list   dw  5 dup(gift_speed)                                                                     ; Counters for each gift
+    backgournd_color    db  5 dup(0)                                                                                                                                                                                                                                                                                                      ; Max number of gifts
+    gift_active         db  5 dup(0)                                                                                                                                                                                                                                                                                                      ; 1 if gift is active, 0 otherwise
+    gift_x_list         dw  5 dup(0)                                                                                                                                                                                                                                                                                                      ; X positions of gifts
+    gift_y_list         dw  5 dup(0)                                                                                                                                                                                                                                                                                                      ; Y positions of gifts
+    gift_counter_list   dw  5 dup(gift_speed)                                                                                                                                                                                                                                                                                             ; Counters for each gift
 
 
 
@@ -314,6 +327,30 @@ ResetAll PROC
                         int  16h
                         RET
 ResetAll ENDP
+
+; optimization needed
+ResetBricks proc
+                        mov  di, 0
+    rows_reset_loop:          
+                        mov  si, 0
+                        mov  ax, di
+                        mov  bx, numCols
+                        mul  bx
+                        mov bx, ax
+    cols_reset_loop:          
+                        mov  bricks[bx], 1
+
+                        add bx, 2
+                        add  si, 2
+                        cmp  si, 42
+                        jne  cols_reset_loop
+
+                        add  di, 2
+                        cmp  di, 20
+                        jne  rows_reset_loop
+    ret
+ResetBricks endp
+
 DrawGift PROC
     ; Check if PowerUp is active
                         mov  si, bx                          ; Load gift index into SI
@@ -445,55 +482,131 @@ MoveGift PROC
                         ret
 MoveGift ENDP
 
-
-DrawRectangle PROC
+DrawRectangle1 PROC
     ;to calculate final column
                         mov  dx,rowStart[di]                 ;set row start of each rectangle
                         mov  ah,0ch                          ;command to draw pixel
-                         
+
                         mov  bx, rheight                     ; bx = height
                         add  bx, dx                          ; bx = height + row = final row to draw in
                         mov  dummyrow, bx                    ;dummyrow now holds the final row
- 
+
     ;to calculate final column
                         mov  bx, rwidth                      ;bx = rectangle wdith
-                        add  bx, colStart[si]                ;bx += column start
+                        add  bx, colStart1[si]               ;bx += column start
                         mov  dummycol, bx                    ;dummycol now has the final column to draw
         
     height_loop:                                             ;draws pixels along the height (rows)
-                        mov  cx,colStart[si]
+                        mov  cx,colStart1[si]
 
     width_loop:         int  10h                             ;draws pixels along the width (columns) for one row
                         inc  cx
                         cmp  cx, dummycol
                         jnz  width_loop
-                                                 
+
 
                         inc  dx
                         cmp  dx, dummyrow
                         jnz  height_loop
                         ret
-DrawRectangle ENDP
+DrawRectangle1 ENDP
+
+DrawRectangle2 PROC
+    ;to calculate final column
+                        mov  dx,rowStart[di]                 ;set row start of each rectangle
+                        mov  ah,0ch                          ;command to draw pixel
+
+                        mov  bx, rheight                     ; bx = height
+                        add  bx, dx                          ; bx = height + row = final row to draw in
+                        mov  dummyrow, bx                    ;dummyrow now holds the final row
+
+    ;to calculate final column
+                        mov  bx, rwidth                      ;bx = rectangle wdith
+                        add  bx, colStart2[si]               ;bx += column start
+                        mov  dummycol, bx                    ;dummycol now has the final column to draw
+        
+    height2_loop:                                            ;draws pixels along the height (rows)
+                        mov  cx,colStart2[si]
+
+    width2_loop:        int  10h                             ;draws pixels along the width (columns) for one row
+                        inc  cx
+                        cmp  cx, dummycol
+                        jnz  width2_loop
+
+
+                        inc  dx
+                        cmp  dx, dummyrow
+                        jnz  height2_loop
+                        ret
+DrawRectangle2 ENDP
+
+DrawRectangle3 PROC
+    ;to calculate final column
+                        mov  dx,rowStart[di]                 ;set row start of each rectangle
+                        mov  ah,0ch                          ;command to draw pixel
+
+                        mov  bx, rheight                     ; bx = height
+                        add  bx, dx                          ; bx = height + row = final row to draw in
+                        mov  dummyrow, bx                    ;dummyrow now holds the final row
+
+    ;to calculate final column
+                        mov  bx, rwidth                      ;bx = rectangle wdith
+                        add  bx, colStart3[si]               ;bx += column start
+                        mov  dummycol, bx                    ;dummycol now has the final column to draw
+        
+    height3_loop:                                            ;draws pixels along the height (rows)
+                        mov  cx,colStart3[si]
+
+    width3_loop:        int  10h                             ;draws pixels along the width (columns) for one row
+                        inc  cx
+                        cmp  cx, dummycol
+                        jnz  width3_loop
+
+
+                        inc  dx
+                        cmp  dx, dummyrow
+                        jnz  height3_loop
+                        ret
+DrawRectangle3 ENDP
 
 DrawRow proc
                         mov  si, 0                           ; si is col-index
                         mov  al, 0
-                        mov  dl, al
 
     draw_loop:          
                         push ax
                         mov  ax, di
-                        mov  cx, 7
+                        mov  cx, numCols
                         mul  cx
+                        mov  cx, 2
+                        div  cx
                         mov  bx, ax
                         add  bx, si
-                        mov  dx, ax
+
                         mov  dx, bricks[bx]
                         pop  ax
                         inc  al                              ;change color of each rectangle
                         cmp  dx, 1
                         jne  dont_draw
-                        call DrawRectangle
+
+                        cmp  selected_level, 1
+                        je   level1
+                        cmp  selected_level, 2
+                        je   level2
+                        cmp  selected_level, 3
+                        je   level3
+
+    level1:             
+                        call DrawRectangle1
+                        jmp  dont_draw
+
+    level2:             
+                        call DrawRectangle2
+                        jmp  dont_draw
+    level3:             
+                        call DrawRectangle3
+                        jmp  dont_draw
+
     dont_draw:          
                         add  si, 2                           ; Move to the next rectangle
                         cmp  si, numCols
@@ -506,7 +619,7 @@ DrawLevel1 proc
                         mov  numRows, 8
                         mov  numCols, 14
                         mov  difficulty, 01fh
-                        mov  original_difficulty, 01fh
+                        mov  original_difficulty, 0dh
                         mov  selected_level, 1
     rows_loop:          
                         call DrawRow
@@ -519,7 +632,7 @@ DrawLevel1 endp
 DrawLevel2 proc
                         mov  di, 0                           ; di is row-index
                         mov  numRows, 14
-                        mov  numCols, 16
+                        mov  numCols, 24
                         mov  rwidth, 20
                         mov  difficulty, 0dh
                         mov  original_difficulty, 0dh
@@ -538,7 +651,7 @@ DrawLevel2 endp
 DrawLevel3 proc
                         mov  di, 0                           ; di is row-index
                         mov  numRows, 20
-                        mov  numCols, 20
+                        mov  numCols, 42
                         mov  rwidth, 10
                         mov  difficulty, 09h
                         mov  original_difficulty, 09h
@@ -552,7 +665,25 @@ DrawLevel3 proc
                         ret
 DrawLevel3 endp
 
-Collision proc
+Collision macro lvl
+                        cmp  lvl, 1
+                        je   coll1
+                        cmp  lvl, 2
+                        je   coll2
+                        cmp  lvl, 3
+                        je   coll3
+    coll1:              
+                        call Collision1
+                        jmp  coll_end
+    coll2:
+                        call Collision2
+                        jmp  coll_end
+    coll3:
+                        call Collision3
+    coll_end:
+endm
+
+Collision1 proc
                         push ax
                         push bx
                         push cx
@@ -561,27 +692,55 @@ Collision proc
                         push si
 
                         mov  di, 0                           ; di is row-index
-    collision_loop1:    
+    collision1_loop1:    
                         mov  si, 0                           ; si is col-index
+
+                        mov  ax, rowStart[di]
+                        sub  ax, ball_size
+                        cmp  ax, ball_y
+                        jg   not_in_row1
+
+                        add  ax, rheight
+                        add  ax, ball_size
+                        cmp  ax, ball_y
+                        jl   not_in_row1
+    collision1_loop2:    
+
+                        mov  ax, colStart1[si]
+                        sub  ax, ball_size
+                        cmp  ax, ball_x
+                        jg   not_in_col1
+
+                        add  ax, rwidth
+                        add  ax, ball_size
+                        cmp  ax, ball_x
+                        jl   not_in_col1
+
                         mov  ax, di
-                        mov  cx, 7
+                        mov  cx, numCols
                         mul  cx
+                        mov cx,2
+                        div cx
                         mov  bx, ax
-    collision_loop2:    
+                        add  bx, si
                         mov  ax, bricks[bx]
-                        add  bx, 2
                         cmp  ax, 1
-                        jne  no_brick
-                        call CheckCollision
-    no_brick:           
+                        jne  no_brick1
+
+                        CALL ClearBrick
+
+
+    not_in_col1:         
                         add  si, 2                           ; Move to the next rectangle
                         cmp  si, numCols
-                        jne  collision_loop2
+                        jne  collision1_loop2
 
+    not_in_row1:         
                         add  di,2                            ;move 2 bytes to second element
                         cmp  di, numRows
-                        jne  collision_loop1
+                        jne  collision1_loop1
 
+    no_brick1:           
                         pop  si
                         pop  di
                         pop  dx
@@ -589,50 +748,9 @@ Collision proc
                         pop  bx
                         pop  ax
                         ret
-Collision endp
+Collision1 endp
 
-CheckCollision proc
-                        push ax
-                        push bx
-                        push cx
-                        push dx
-
-                        mov  ax, rowStart[di]
-                        sub  ax, ball_size
-                        cmp  ax, ball_y
-                        jg   no_collision
-
-                        add  ax, rheight
-                        add  ax, ball_size
-                        cmp  ax, ball_y
-                        jl   no_collision
-
-                        mov  ax, colStart[si]
-                        cmp  ax, ball_x
-                        jg   no_collision
-
-                        add  ax, rwidth
-                        cmp  ax, ball_x
-                        jl   no_collision
-                        
-                        mov  ax, di
-                        mov  cx, 7
-                        mul  cx
-                        mov  bx, ax
-                        add  bx, si
-                        mov  bricks[bx], 0
-                        CALL beep
-                        CALL ClearBrick
-
-    no_collision:       
-                        pop  dx
-                        pop  cx
-                        pop  bx
-                        pop  ax
-                        ret
-CheckCollision endp
-
-ClearBrick proc near
+Collision2 proc
                         push ax
                         push bx
                         push cx
@@ -640,10 +758,180 @@ ClearBrick proc near
                         push di
                         push si
 
+                        mov  di, 0                           ; di is row-index
+    collision2_loop1:    
+                        mov  si, 0                           ; si is col-index
+
+                        mov  ax, rowStart[di]
+                        sub  ax, ball_size
+                        cmp  ax, ball_y
+                        jg   not_in_row2
+
+                        add  ax, rheight
+                        add  ax, ball_size
+                        cmp  ax, ball_y
+                        jl   not_in_row2
+    collision2_loop2:    
+
+                        mov  ax, colStart2[si]
+                        sub  ax, ball_size
+                        cmp  ax, ball_x
+                        jg   not_in_col2
+
+                        add  ax, rwidth
+                        add  ax, ball_size
+                        cmp  ax, ball_x
+                        jl   not_in_col2
+
+                        mov  ax, di
+                        mov  cx, numCols
+                        mul  cx
+                        mov cx, 2
+                        div cx
+                        mov  bx, ax
+                        add  bx, si
+                        mov  ax, bricks[bx]
+                        cmp  ax, 1
+                        jne  no_brick2
+
+                        CALL ClearBrick
+
+
+    not_in_col2:         
+                        add  si, 2                           ; Move to the next rectangle
+                        cmp  si, numCols
+                        jne  collision2_loop2
+
+    not_in_row2:         
+                        add  di,2                            ;move 2 bytes to second element
+                        cmp  di, numRows
+                        jne  collision2_loop1
+
+    no_brick2:           
+                        pop  si
+                        pop  di
+                        pop  dx
+                        pop  cx
+                        pop  bx
+                        pop  ax
+                        ret
+Collision2 endp
+
+Collision3 proc
+                        push ax
+                        push bx
+                        push cx
+                        push dx
+                        push di
+                        push si
+
+                        mov  di, 0                           ; di is row-index
+    collision3_loop1:    
+                        mov  si, 0                           ; si is col-index
+
+                        mov  ax, rowStart[di]
+                        sub  ax, ball_size
+                        cmp  ax, ball_y
+                        jg   not_in_row3
+
+                        add  ax, rheight
+                        add  ax, ball_size
+                        cmp  ax, ball_y
+                        jl   not_in_row3
+    collision3_loop2:    
+
+                        mov  ax, colStart3[si]
+                        sub  ax, ball_size
+                        cmp  ax, ball_x
+                        jg   not_in_col3
+
+                        add  ax, rwidth
+                        add  ax, ball_size
+                        cmp  ax, ball_x
+                        jl   not_in_col3
+
+                        mov  ax, di
+                        mov  cx, numCols
+                        mul  cx
+                        mov cx, 2
+                        div cx
+                        mov  bx, ax
+                        add  bx, si
+                        mov  ax, bricks[bx]
+                        cmp  ax, 1
+                        jne  no_brick3
+
+                        CALL ClearBrick
+
+
+    not_in_col3:         
+                        add  si, 2                           ; Move to the next rectangle
+                        cmp  si, numCols
+                        jne  collision3_loop2
+
+    not_in_row3:         
+                        add  di,2                            ;move 2 bytes to second element
+                        cmp  di, numRows
+                        jne  collision3_loop1
+
+    no_brick3:           
+                        pop  si
+                        pop  di
+                        pop  dx
+                        pop  cx
+                        pop  bx
+                        pop  ax
+                        ret
+Collision3 endp
+
+ClearBrick proc
+                        push ax
+                        push bx
+                        push cx
+                        push dx
+                        push di
+                        push si
+
+
+                        CALL beep
+                        mov  bricks[bx], 0
+                        add  score, 1
                         mov  al, 0
-                        call DrawRectangle
-                        CALL SpawnGift
-    
+
+                        cmp  selected_level, 1
+                        je   clear_level1
+                        cmp  selected_level, 2
+                        je   clear_level2
+                        cmp  selected_level, 3
+                        je   clear_level3
+
+    clear_level1:       
+                        call DrawRectangle1
+                        cmp  score, score1
+                        jne  same_lvl
+                        call ResetBricks
+                        call ClearScreen
+                        call DrawLevel2
+                        jmp next_level
+
+    clear_level2:       
+                        call DrawRectangle2
+                        cmp  score, score2
+                        jne  same_lvl
+                        call ResetBricks
+                        call ClearScreen
+                        call DrawLevel3
+                        jmp next_level
+
+    clear_level3:       
+                        call DrawRectangle3
+                        cmp  score, score3
+                        jne  same_lvl
+                        call ClearScreen
+
+    next_level:            
+
+    same_lvl:           
                         pop  si
                         pop  di
                         pop  dx
@@ -652,6 +940,7 @@ ClearBrick proc near
                         pop  ax
                         ret
 ClearBrick endp
+
 SpawnGift PROC
     ; Find an inactive gift slot
                         mov  cx, gift_count                  ; Load the total number of gifts
@@ -693,12 +982,12 @@ MAIN PROC
                         MOV  AL, 13h
                         INT  10h
 
-                        ;call DrawLevel1
+                        call DrawLevel1
     ;call DrawLevel2
-    call DrawLevel3
+    ;call DrawLevel3
 
     gameLoop:           
-                        CALL Collision
+                        Collision selected_level ; a macro to determine which collision proc to call based on the current level
                         CALL DrawPadel
                         CALL MovePadel
                         mov  ball_color, 0
@@ -777,3 +1066,45 @@ beep endp
 
 END MAIN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; CheckCollision proc
+    ;                         push ax
+    ;                         push bx
+    ;                         push cx
+    ;                         push dx
+
+    ;                         mov  ax, rowStart[di]
+    ;                         sub  ax, ball_size
+    ;                         cmp  ax, ball_y
+    ;                         jg   no_collision
+
+    ;                         add  ax, rheight
+    ;                         add  ax, ball_size
+    ;                         cmp  ax, ball_y
+    ;                         jl   no_collision
+
+    ;                         mov  ax, colStart[si]
+    ;                         sub  ax, ball_size
+    ;                         cmp  ax, ball_x
+    ;                         jg   no_collision
+
+    ;                         add  ax, rwidth
+    ;                         add  ax, ball_size
+    ;                         cmp  ax, ball_x
+    ;                         jl   no_collision
+                        
+    ;                         mov  ax, di
+    ;                         mov  cx, 7
+    ;                         mul  cx
+    ;                         mov  bx, ax
+    ;                         add  bx, si
+    ;                         mov  bricks[bx], 0
+    ;                         CALL beep
+    ;                         CALL ClearBrick
+
+    ;     no_collision:
+    ;                         pop  dx
+    ;                         pop  cx
+    ;                         pop  bx
+    ;                         pop  ax
+    ;                         ret
+    ; CheckCollision endp
