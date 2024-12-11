@@ -9,6 +9,7 @@
     padel_y2            DW  190
     padel_color         db  4
     padel_speed         equ 7
+    padel_width         dw 50
 
     ball_x              DW  160
     ball_y              DW  180
@@ -53,18 +54,22 @@
     gift_dy             dw  2
     gift_size           equ 6
     gift_speed          equ 40
-    gift_color          db  2
-    ribbon_color        db  4
-    bow_color           db  6
+    gift_color          db  ?
+    ribbon_color        db  ?
+    bow_color           db  ?
     gift_count          dw  5
     backgournd_color    db  5 dup(0)
     gift_active         db  5 dup(0)
-    gift_x_list         dw  5 dup(0)
-    gift_y_list         dw  5 dup(0)
-    gift_counter_list   dw  5 dup(gift_speed)
+    gift_x              dw  5
+    gift_y              dw  5
+    gift_counter        dw  gift_speed
+    gift_colors_list    db  2,5,9,14,15
+    gift_ribbon_list    db  4,11,2,4,5
     gift_ball_color     db  2
     gift_timer          dw  0
-    ; Counters for each gift
+    current_gift        dw  0
+    is_there_gift       db  0
+    
 
 
 
@@ -154,7 +159,7 @@ MovePadel PROC
 
                          mov       padel_x1, si
 
-                         add       si, 50
+                         add       si, padel_width
                          mov       padel_x2, si
 
 
@@ -318,9 +323,8 @@ ResetAll PROC
                          mov       bx,0
     ResetAllGifts:       
                          mov       byte ptr [gift_active+bx], 0
-                         mov       word ptr [gift_x_list+bx], 0
-                         mov       word ptr [gift_y_list+bx], 0
-                         mov       word ptr [[backgournd_color]+bx], 0
+                         mov       gift_x, 0
+                         mov       gift_y, 0
                          inc       bx
                          cmp       bx,[gift_count]
                          jne       ResetAllGifts
@@ -353,15 +357,15 @@ ResetBricks proc
 ResetBricks endp
 
 DrawGift PROC
-    ; Check if PowerUp is active
-                         mov       si, bx                                 ; Load gift index into SI
-                         cmp       [gift_active+si], 0                    ; Check if the gift is active
-                         je        SkipDrawing                            ; Skip if not active
+                         cmp       [gift_active+bx], 0
+                         push      bx                              ; Check if the gift is active
+                         je        SkipDrawing                     ; Skip if not active
+
 
     ; Use calculated offsets to access gift_x_list and gift_y_list
-                         mov       cx, [gift_x_list+bx]                   ; Get X position of the gift
-                         mov       dx, [gift_y_list+bx]                   ; Get Y position of the gift
-                         mov       bx, gift_size                          ; Load the gift size
+                         mov       cx, gift_x                      ; Get X position of the gift
+                         mov       dx, gift_y                      ; Get Y position of the gift
+                         mov       bx, gift_size                   ; Load the gift size
                          push      cx
                          push      dx
                          mov       si, 0
@@ -394,7 +398,7 @@ DrawGift PROC
                          mov       di, 0
     RibbonHorizontal:    
                          mov       ah, 0Ch
-                         mov       al, ribbon_color                       ; Color for ribbon (e.g., Red)
+                         mov       al, ribbon_color
                          int       10h
 
                          inc       cx
@@ -435,97 +439,149 @@ DrawGift PROC
                          cmp       di, gift_size
                          jl        DrawBow
     SkipDrawing:         
-
+                         pop       bx
                          RET
 DrawGift ENDP
 
 
 MoveGift PROC
+                         push      bx
                          mov       cx, gift_count
                          xor       bx, bx
+                        
 
     LoopMoveGifts:       
                          cmp       bx, cx
                          jge       EndMove
 
-    ; Calculate offset for current gift
-                         mov       ax, bx
-                         shl       ax, 1
-                         mov       si, ax
 
     ; Check if gift is active
-                         cmp       [gift_active+bx], 0                    ; Is the gift active?
+                         cmp       [gift_active+bx], 0             ; Is the gift active?
                          je        SkipGift
 
     ; Decrement counter
-                         dec       [gift_counter_list+si]                 ; Decrement gift's counter
+                         dec       [gift_counter]                  ; Decrement gift's counter
                          jnz       SkipGift
+                        
+                         push      cx
+                         push      ax
+                         mov       gift_color, 0
+                         mov       bow_color, 0
+                         mov       ribbon_color, 0
+
+                         CALL      DrawGift
+                         pop       ax
+                         pop       cx
 
     ; Reset counter
                          mov       ax, gift_speed
-                         mov       [gift_counter_list+si], ax
+                         mov       [gift_counter], ax
 
     ; Move gift down
-                         mov       ax, [gift_y_list+si]
+                         mov       ax, gift_y
                          add       ax, gift_dy
-                         mov       [gift_y_list+si], ax                   ; Update Y positionFre
+                         mov       [gift_y], ax                    ; Update Y positionFre
+
     continue_move_gift:  
                          cmp       ax, 190
                          jl        check_gift_collision
                          mov       byte ptr [gift_active+bx], 0
+                         mov       [is_there_gift],0
                          jmp       SkipGift
                         
     check_gift_collision:
-                         mov       ax, [gift_y_list+si]
+                         mov       ax, gift_y
                          add       ax, gift_size
                          cmp       ax, padel_y1
                          jl        SkipGift
 
-                         mov       ax, [gift_y_list+si]
+                         mov       ax, gift_y
                          add       ax, ball_size
                          cmp       ax, padel_y2
                          jg        SkipGift
 
-                         mov       ax, [gift_x_list+si]
+                         mov       ax, gift_x
                          add       ax, gift_size
                          cmp       ax, padel_x1
                          jl        SkipGift
                      
-                         mov       ax, [gift_x_list+si]
+                         mov       ax, gift_x
                          add       ax, gift_size
                          cmp       ax, padel_x2
                          jg        SkipGift
                         
-                         mov       [gift_ball_color],4
-                         mov       gift_timer, 0
+                         cmp       [gift_colors_list+bx],2                  ; Check if gift_color is 2
+                         je        SetColor4                       ; Jump to set gift_ball_color to 4
+
+                         cmp       [gift_colors_list+bx], 5                   ; Check if gift_color is 5
+                         je        SetColor14                      ; Jump to set gift_ball_color to 14
+
+                         cmp       [gift_colors_list+bx], 9                   ; Check if gift_color is 9
+                         je        SetColor5                       ; Jump to set gift_ball_color to 5
+
+                         cmp       [gift_colors_list+bx], 14                  ; Check if gift_color is 14
+                         je        SetColor1                       ; Jump to set gift_ball_color to 1
+
+                         cmp       [gift_colors_list+bx], 15                  ; Check if gift_color is 15
+                         je        SetColor13                      ; Jump to set gift_ball_color to 13
+
+                         jmp       EndSetColor                     ; Skip to end if no condition matches
+
+    SetColor4:           
+                         mov       [gift_ball_color], 4
+                         jmp       EndSetColor                     ; Jump to end
+
+    SetColor14:          
+                         mov       [gift_ball_color], 14
+                         mov [padel_width],70
+                         jmp       EndSetColor                     ; Jump to end
+
+    SetColor5:           
+                         mov       [gift_ball_color], 5
+                         mov [padel_width],30
+                         jmp       EndSetColor                     ; Jump to end
+
+    SetColor1:           
+                         mov       [gift_ball_color], 1
+                         mov padel_x1,155
+                         mov padel_x2, 165
+                         jmp       EndSetColor                     ; Jump to end
+
+    SetColor13:          
+                         mov       [gift_ball_color], 13
+
+    EndSetColor:         
+                         mov       gift_timer, 0                   ; Reset gift_timer
+
 
     SkipGift:            
                          inc       bx
                          jmp       LoopMoveGifts
 
     EndMove:             
+                         pop       bx
                          ret
 MoveGift ENDP
 
 
 DrawRectangle1 PROC
     ;to calculate final column
-                         mov       dx,rowStart[di]                        ;set row start of each rectangle
-                         mov       ah,0ch                                 ;command to draw pixel
+                         mov       dx,rowStart[di]                 ;set row start of each rectangle
+                         mov       ah,0ch                          ;command to draw pixel
 
-                         mov       bx, rheight                            ; bx = height
-                         add       bx, dx                                 ; bx = height + row = final row to draw in
-                         mov       dummyrow, bx                           ;dummyrow now holds the final row
+                         mov       bx, rheight                     ; bx = height
+                         add       bx, dx                          ; bx = height + row = final row to draw in
+                         mov       dummyrow, bx                    ;dummyrow now holds the final row
 
     ;to calculate final column
-                         mov       bx, rwidth                             ;bx = rectangle wdith
-                         add       bx, colStart1[si]                      ;bx += column start
-                         mov       dummycol, bx                           ;dummycol now has the final column to draw
+                         mov       bx, rwidth                      ;bx = rectangle wdith
+                         add       bx, colStart1[si]               ;bx += column start
+                         mov       dummycol, bx                    ;dummycol now has the final column to draw
         
-    height_loop:                                                          ;draws pixels along the height (rows)
+    height_loop:                                                   ;draws pixels along the height (rows)
                          mov       cx,colStart1[si]
 
-    width_loop:          int       10h                                    ;draws pixels along the width (columns) for one row
+    width_loop:          int       10h                             ;draws pixels along the width (columns) for one row
                          inc       cx
                          cmp       cx, dummycol
                          jnz       width_loop
@@ -539,22 +595,22 @@ DrawRectangle1 ENDP
 
 DrawRectangle2 PROC
     ;to calculate final column
-                         mov       dx,rowStart[di]                        ;set row start of each rectangle
-                         mov       ah,0ch                                 ;command to draw pixel
+                         mov       dx,rowStart[di]                 ;set row start of each rectangle
+                         mov       ah,0ch                          ;command to draw pixel
 
-                         mov       bx, rheight                            ; bx = height
-                         add       bx, dx                                 ; bx = height + row = final row to draw in
-                         mov       dummyrow, bx                           ;dummyrow now holds the final row
+                         mov       bx, rheight                     ; bx = height
+                         add       bx, dx                          ; bx = height + row = final row to draw in
+                         mov       dummyrow, bx                    ;dummyrow now holds the final row
 
     ;to calculate final column
-                         mov       bx, rwidth                             ;bx = rectangle wdith
-                         add       bx, colStart2[si]                      ;bx += column start
-                         mov       dummycol, bx                           ;dummycol now has the final column to draw
+                         mov       bx, rwidth                      ;bx = rectangle wdith
+                         add       bx, colStart2[si]               ;bx += column start
+                         mov       dummycol, bx                    ;dummycol now has the final column to draw
         
-    height2_loop:                                                         ;draws pixels along the height (rows)
+    height2_loop:                                                  ;draws pixels along the height (rows)
                          mov       cx,colStart2[si]
 
-    width2_loop:         int       10h                                    ;draws pixels along the width (columns) for one row
+    width2_loop:         int       10h                             ;draws pixels along the width (columns) for one row
                          inc       cx
                          cmp       cx, dummycol
                          jnz       width2_loop
@@ -568,22 +624,22 @@ DrawRectangle2 ENDP
 
 DrawRectangle3 PROC
     ;to calculate final column
-                         mov       dx,rowStart[di]                        ;set row start of each rectangle
-                         mov       ah,0ch                                 ;command to draw pixel
+                         mov       dx,rowStart[di]                 ;set row start of each rectangle
+                         mov       ah,0ch                          ;command to draw pixel
 
-                         mov       bx, rheight                            ; bx = height
-                         add       bx, dx                                 ; bx = height + row = final row to draw in
-                         mov       dummyrow, bx                           ;dummyrow now holds the final row
+                         mov       bx, rheight                     ; bx = height
+                         add       bx, dx                          ; bx = height + row = final row to draw in
+                         mov       dummyrow, bx                    ;dummyrow now holds the final row
 
     ;to calculate final column
-                         mov       bx, rwidth                             ;bx = rectangle wdith
-                         add       bx, colStart3[si]                      ;bx += column start
-                         mov       dummycol, bx                           ;dummycol now has the final column to draw
+                         mov       bx, rwidth                      ;bx = rectangle wdith
+                         add       bx, colStart3[si]               ;bx += column start
+                         mov       dummycol, bx                    ;dummycol now has the final column to draw
         
-    height3_loop:                                                         ;draws pixels along the height (rows)
+    height3_loop:                                                  ;draws pixels along the height (rows)
                          mov       cx,colStart3[si]
 
-    width3_loop:         int       10h                                    ;draws pixels along the width (columns) for one row
+    width3_loop:         int       10h                             ;draws pixels along the width (columns) for one row
                          inc       cx
                          cmp       cx, dummycol
                          jnz       width3_loop
@@ -596,7 +652,7 @@ DrawRectangle3 PROC
 DrawRectangle3 ENDP
 
 DrawRow proc
-                         mov       si, 0                                  ; si is col-index
+                         mov       si, 0                           ; si is col-index
                          mov       al, 0
 
     draw_loop:           
@@ -611,7 +667,7 @@ DrawRow proc
 
                          mov       dx, bricks[bx]
                          pop       ax
-                         inc       al                                     ;change color of each rectangle
+                         inc       al                              ;change color of each rectangle
                          cmp       dx, 1
                          jne       dont_draw
 
@@ -634,14 +690,14 @@ DrawRow proc
                          jmp       dont_draw
 
     dont_draw:           
-                         add       si, 2                                  ; Move to the next rectangle
+                         add       si, 2                           ; Move to the next rectangle
                          cmp       si, numCols
                          jnz       draw_loop
                          ret
 DrawRow ENDP
 
 DrawLevel1 proc
-                         mov       di, 0                                  ; di is row-index
+                         mov       di, 0                           ; di is row-index
                          mov       numRows, 8
                          mov       numCols, 14
                          mov       difficulty, 01fh
@@ -649,14 +705,14 @@ DrawLevel1 proc
                          mov       selected_level, 1
     rows_loop:           
                          call      DrawRow
-                         add       di,2                                   ;move 2 bytes to second element
+                         add       di,2                            ;move 2 bytes to second element
                          cmp       di, numRows
                          jnz       rows_loop
                          ret
 DrawLevel1 endp
 
 DrawLevel2 proc
-                         mov       di, 0                                  ; di is row-index
+                         mov       di, 0                           ; di is row-index
                          mov       numRows, 14
                          mov       numCols, 24
                          mov       rwidth, 20
@@ -667,7 +723,7 @@ DrawLevel2 proc
 
     lvl2:                
                          call      DrawRow
-                         add       di,2                                   ;move 2 bytes to second element
+                         add       di,2                            ;move 2 bytes to second element
                          cmp       di, numRows
                          jnz       lvl2
                          ret
@@ -675,7 +731,7 @@ DrawLevel2 proc
 DrawLevel2 endp
 
 DrawLevel3 proc
-                         mov       di, 0                                  ; di is row-index
+                         mov       di, 0                           ; di is row-index
                          mov       numRows, 20
                          mov       numCols, 42
                          mov       rwidth, 10
@@ -685,28 +741,28 @@ DrawLevel3 proc
 
     lvl3:                
                          call      DrawRow
-                         add       di,2                                   ;move 2 bytes to second element
+                         add       di,2                            ;move 2 bytes to second element
                          cmp       di, numRows
                          jnz       lvl3
                          ret
 DrawLevel3 endp
 
 Collision macro lvl
-                        cmp  lvl, 1
-                        je   coll1
-                        cmp  lvl, 2
-                        je   coll2
-                        cmp  lvl, 3
-                        je   coll3
-    coll1:              
-                        call Collision1
-                        jmp  coll_end
-    coll2:       
-                 call Collision2
-                        jmp  coll_end
-    coll3:       
-                 call Collision3
-    coll_end:
+               cmp       lvl, 1
+               je        coll1
+               cmp       lvl, 2
+               je        coll2
+               cmp       lvl, 3
+               je        coll3
+    coll1:     
+               call      Collision1
+               jmp       coll_end
+    coll2:            
+                      call      Collision2
+               jmp       coll_end
+    coll3:            
+                      call      Collision3
+    coll_end:             
 endm
 
 Collision1 proc
@@ -717,9 +773,9 @@ Collision1 proc
                          push      di
                          push      si
 
-                         mov       di, 0                                  ; di is row-index
+                         mov       di, 0                           ; di is row-index
     collision1_loop1:    
-                         mov       si, 0                                  ; si is col-index
+                         mov       si, 0                           ; si is col-index
 
                          mov       ax, rowStart[di]
                          sub       ax, ball_size
@@ -757,12 +813,12 @@ Collision1 proc
 
 
     not_in_col1:         
-                         add       si, 2                                  ; Move to the next rectangle
+                         add       si, 2                           ; Move to the next rectangle
                          cmp       si, numCols
                          jne       collision1_loop2
 
     not_in_row1:         
-                         add       di,2                                   ;move 2 bytes to second element
+                         add       di,2                            ;move 2 bytes to second element
                          cmp       di, numRows
                          jne       collision1_loop1
 
@@ -784,9 +840,9 @@ Collision2 proc
                          push      di
                          push      si
 
-                         mov       di, 0                                  ; di is row-index
+                         mov       di, 0                           ; di is row-index
     collision2_loop1:    
-                         mov       si, 0                                  ; si is col-index
+                         mov       si, 0                           ; si is col-index
 
                          mov       ax, rowStart[di]
                          sub       ax, ball_size
@@ -824,12 +880,12 @@ Collision2 proc
 
 
     not_in_col2:         
-                         add       si, 2                                  ; Move to the next rectangle
+                         add       si, 2                           ; Move to the next rectangle
                          cmp       si, numCols
                          jne       collision2_loop2
 
     not_in_row2:         
-                         add       di,2                                   ;move 2 bytes to second element
+                         add       di,2                            ;move 2 bytes to second element
                          cmp       di, numRows
                          jne       collision2_loop1
 
@@ -851,9 +907,9 @@ Collision3 proc
                          push      di
                          push      si
 
-                         mov       di, 0                                  ; di is row-index
+                         mov       di, 0                           ; di is row-index
     collision3_loop1:    
-                         mov       si, 0                                  ; si is col-index
+                         mov       si, 0                           ; si is col-index
 
                          mov       ax, rowStart[di]
                          sub       ax, ball_size
@@ -891,12 +947,12 @@ Collision3 proc
 
 
     not_in_col3:         
-                         add       si, 2                                  ; Move to the next rectangle
+                         add       si, 2                           ; Move to the next rectangle
                          cmp       si, numCols
                          jne       collision3_loop2
 
     not_in_row3:         
-                         add       di,2                                   ;move 2 bytes to second element
+                         add       di,2                            ;move 2 bytes to second element
                          cmp       di, numRows
                          jne       collision3_loop1
 
@@ -978,38 +1034,59 @@ RandomByte PROC
 RandomByte ENDP
 
 SpawnGift PROC
-                         mov       cx, gift_count
-                         xor       bx, bx
+                         cmp       [is_there_gift], 1
+                         je        SkipActivation
+                         mov       cx, gift_count                  ; Total number of gifts
+                         mov       bx, current_gift                ; Start checking from current_gift
+                         xor       dx, 0                           ; Loop control (wrap-around)
 
     FindSlot:            
-                         cmp       bx, cx
-                         jge       NoSlotAvailable
-                         cmp       [gift_active+bx], 0
+                         cmp       bx, cx                          ; Check if bx >= gift_count
+                         jl        CheckSlot                       ; If within range, check slot
+
+                         xor       bx, bx                          ; Wrap around to 0
+                         inc       dx                              ; Increment loop counter
+                         cmp       dx, 2                           ; Have we looped twice?
+                         jge       NoSlotAvailable                 ; If yes, exit
+
+    CheckSlot:           
+                         cmp       [gift_active+bx], 0             ; Check if the gift is inactive
                          je        MaybeActivate
-                         inc       bx
+                         inc       bx                              ; Move to the next slot
                          jmp       FindSlot
 
     MaybeActivate:       
-    ; Generate a random number
+    ; Generate a random number to decide activation
+                         push      cx
                          call      RandomByte
+                         pop       cx
                          and       al, 1
                          cmp       al, 0
-                         je        SkipActivation
+                         je        NoSlotAvailable
 
     ActivateGift:        
                          mov       ax, bx
                          shl       ax, 1
                          mov       si, ax
 
-                         mov       byte ptr [gift_active+bx], 1
+                         mov       [gift_active+bx], 1             ; Activate the gift
                          mov       ax, ball_x
-                         mov       [gift_x_list+si], ax
+                         mov       gift_x, ax
                          mov       ax, ball_y
-                         mov       [gift_y_list+si], ax
+                         mov       gift_y, ax
+                         mov       [is_there_gift],1
+
+    ; Increment current_gift
+                         inc       current_gift                    ; Increment current gift
+                         cmp       current_gift, cx                ; Check if it exceeds gift_count
+                         jl        SkipWrapAround
+                         mov       [current_gift],0
+
+    SkipWrapAround:      
                          ret
 
     SkipActivation:      
-                         inc       bx
+                         inc       bx                              ; Move to the next slot
                          jmp       FindSlot
 
     NoSlotAvailable:     
@@ -1017,11 +1094,12 @@ SpawnGift PROC
 SpawnGift ENDP
 
 
+
 MAIN PROC
                          MOV       AX, @DATA
                          MOV       DS, AX
 
-                         MOV       AH, 0                                  ;following 3 lines to enter graphic mode
+                         MOV       AH, 0                           ;following 3 lines to enter graphic mode
                          MOV       AL, 13h
                          INT       10h
     ; MOV  AX, 4F02h                              ; VESA function to set mode
@@ -1033,7 +1111,7 @@ MAIN PROC
     ;call DrawLevel3
 
     gameLoop:            
-                         Collision selected_level                         ; a macro to determine which collision proc to call based on the current level
+                         Collision selected_level                  ; a macro to determine which collision proc to call based on the current level
                          CALL      DrawPadel
                          CALL      MovePadel
                          mov       ball_color, 0
@@ -1043,37 +1121,36 @@ MAIN PROC
                          mov       ball_color, bl
 
                          call      DrawBall
-                         xor       bx, bx
+                         pop       bx
                          mov       cx, gift_count
                          cmp       bx, cx
-                         push      bx
-
-
-                         mov       gift_color, 0
-                         mov       bow_color, 0
-                         mov       ribbon_color, 0
-
-                         CALL      DrawGift
-                         CALL      MoveGift
-
-                         mov       gift_color, 2
-                         mov       bow_color, 4
-                         mov       ribbon_color, 6
-
-                         pop       bx
+                         jl        reset
+                         xor       bx,bx
+    reset:               
 
                         
+                         CALL      MoveGift
+                         mov       al,[gift_colors_list+bx]
+                         mov       gift_color, al
+                         mov       al,[gift_ribbon_list+bx]
+                         mov       bow_color, al
+                         mov       ribbon_color, al
+
                          CALL      DrawGift
+                       
 
                          inc       bx
+                         push      bx
                          cmp       gift_ball_color, 2
                          je        wait_30
 
                          inc       [gift_timer]
                          mov       ax, [gift_timer]
-                         cmp       ax, 3000
+                         cmp       ax, 10000
                          jb        wait_30
                          mov       gift_ball_color, 2
+                         mov [padel_width],50
+
                          mov       gift_timer, 0
                         
     wait_30:             
@@ -1091,21 +1168,21 @@ beep proc
                          push      bx
                          push      cx
                          push      dx
-                         cmp       [gift_ball_color],2
-                         jnz       no_reflect
+                         cmp       [gift_ball_color],4
+                         jz       no_reflect
                          neg       ball_dy
-    no_reflect:          mov       al, 182                                ; Prepare the speaker for the
-                         out       43h, al                                ;  note.
-                         mov       ax, 400                                ; Frequency number (in decimal)
+    no_reflect:          mov       al, 182                         ; Prepare the speaker for the
+                         out       43h, al                         ;  note.
+                         mov       ax, 400                         ; Frequency number (in decimal)
     ;  for middle C.
-                         out       42h, al                                ; Output low byte.
-                         mov       al, ah                                 ; Output high byte.
+                         out       42h, al                         ; Output low byte.
+                         mov       al, ah                          ; Output high byte.
                          out       42h, al
-                         in        al, 61h                                ; Turn on note (get value from
+                         in        al, 61h                         ; Turn on note (get value from
     ;  port 61h).
-                         or        al, 00000011b                          ; Set bits 1 and 0.
-                         out       61h, al                                ; Send new value.
-                         mov       bx, 2                                  ; Pause for duration of note.
+                         or        al, 00000011b                   ; Set bits 1 and 0.
+                         out       61h, al                         ; Send new value.
+                         mov       bx, 2                           ; Pause for duration of note.
 .pause1:
                          mov       cx, 65535
 .pause2:
@@ -1113,10 +1190,10 @@ beep proc
                          jne       .pause2
                          dec       bx
                          jne       .pause1
-                         in        al, 61h                                ; Turn off note (get value from
+                         in        al, 61h                         ; Turn off note (get value from
     ;  port 61h).
-                         and       al, 11111100b                          ; Reset bits 1 and 0.
-                         out       61h, al                                ; Send new value.
+                         and       al, 11111100b                   ; Reset bits 1 and 0.
+                         out       61h, al                         ; Send new value.
 
                          pop       dx
                          pop       cx
