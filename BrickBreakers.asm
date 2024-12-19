@@ -22,6 +22,8 @@
     difficulty            db  0
     original_difficulty   db  0
 
+    inReset               db  0
+
     ;Bricks number of rows and columns
     numRows               dw  8                                                                                                        ; 2 * real number of rows
     numRows1              equ 8
@@ -59,7 +61,7 @@
     ;Brick gifts
     gift_dy               dw  2
     gift_size             equ 6
-    gift_speed            equ 20
+    gift_speed            equ 10
     gift_color            db  ?
     ribbon_color          db  ?
     bow_color             db  ?
@@ -98,6 +100,8 @@
     ball_color_2          db  2
     difficulty_2          db  0
     original_difficulty_2 db  0
+        inReset_2               db  0
+
 
     ;Bricks number of rows and columns
     numRows_2             dw  8                                                                                                        ; 2 * real number of rows
@@ -136,7 +140,7 @@
     ;Brick gifts
     gift_dy_2             dw  2
     gift_size_2           equ 6
-    gift_speed_2          equ 20
+    gift_speed_2          equ 10
     gift_color_2          db  ?
     ribbon_color_2        db  ?
     bow_color_2           db  ?
@@ -157,6 +161,44 @@
 
 
     char db 0
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+C6_freq    equ 3951
+D6_freq    equ 3520
+E6_freq    equ 3136
+F6_freq    equ 2794
+G6_freq    equ 2637
+A6_freq    equ 2349
+B6_freq    equ 2093
+C7_freq    equ 1976
+D7_freq    equ 1760
+E7_freq    equ 1568
+F7_freq    equ 1396
+G7_freq    equ 1318
+A7_freq    equ 1174
+B7_freq    equ 1046
+C8_freq    equ 987
+D8_freq    equ 880
+E8_freq    equ 784
+F8_freq    equ 740
+G8_freq    equ 698
+A8_freq    equ 659
+
+songNotes  dw F6_freq, E6_freq, D6_freq, C6_freq, D6_freq, E6_freq, G6_freq,
+            D6_freq, E6_freq, F6_freq, G6_freq, A6_freq, B6_freq, C7_freq,
+            B6_freq, A6_freq, G6_freq, F6_freq, E6_freq, D6_freq, C6_freq,
+            E6_freq, G6_freq, A6_freq, F6_freq, E6_freq, D6_freq, G6_freq,
+            A6_freq, G6_freq, B6_freq, C7_freq, E7_freq, D7_freq, G7_freq,
+            F6_freq, F7_freq, E7_freq, F6_freq, D6_freq, C6_freq, G6_freq,
+            A6_freq, D6_freq
+
+noteCount  equ 40
+noteTimer      dw 100       ; Timer to control note playing
+
+freq       dw 0
+currentNotePos dw 0     ; Tracks the current position in the songNotes array
+
+timerForSwitch dw 60
+ogTimerForSwitch equ 60
 
 
 
@@ -173,7 +215,7 @@
     ; ClearScreen ENDP
 ClearScreen PROC
                            mov       al, 0
-                           mov       dx, 201
+                           mov       dx, 570
     Clear_outer:            
                            inc       dx
                            cmp       dx, 600
@@ -195,7 +237,7 @@ ClearScreen ENDP
 
 ClearScreen_2 PROC
                            mov       al, 0
-                           mov       dx, 201
+                           mov       dx, 550
     Clear_outer_2:            
                            inc       dx
                            cmp       dx, 600
@@ -661,8 +703,15 @@ ResetAll PROC
                            mov       padel_x2, 224
                            mov       padel_y1, 581
                            mov       padel_y2, 590
+                           mov       ball_dy, 2
+                           mov       ball_dx, 0
                            mov       [gift_ball_color],2
                            mov       [gift_timer],0
+
+                           mov gift_color, 0
+                            mov bow_color, 0
+                            mov ribbon_color, 0
+                            CALL DrawGift
                            CALL      ClearScreen
                            cmp       selected_level, 1
                            jnz       cont1
@@ -689,53 +738,56 @@ ResetAll PROC
                            cmp       bl,[gift_count]
                            jne       ResetAllGifts
                            CALL      DrawPadel
+                           
+                           mov inReset, 1
 
-
-                           mov       ah, 0
-                           int       16h
                            RET
 ResetAll ENDP
 ResetAll_2 PROC
                            mov       ball_x_2, 599
                            mov       ball_y_2, 560
-                           mov       ball_dx_2, ball_og_speed
-                           mov       ball_dy_2, ball_og_speed
+                           mov       ball_dx_2, ball_og_speed_2
+                           mov       ball_dy_2, ball_og_speed_2
                            mov       padel_x1_2, 574
                            mov       padel_x2_2, 624
                            mov       padel_y1_2, 581
                            mov       padel_y2_2, 590
+                           mov       ball_dy_2, 2
+                           mov       ball_dx_2, 0
                            mov       [gift_ball_color_2],2
                            mov       [gift_timer_2],0
+
+                           mov gift_color_2, 0
+                            mov bow_color_2, 0
+                            mov ribbon_color_2, 0
+                            CALL DrawGift_2
                            CALL      ClearScreen_2
                            cmp       selected_level_2, 1
                            jnz       cont1_2
                            CALL      DrawLevel1_2
                            jmp       cont_2
-    cont1_2:               
+    cont1_2:                 
                            cmp       selected_level_2, 2
                            jnz       cont2_2
                            CALL      DrawLevel2_2
                            jmp       cont_2
-    cont2_2:               
+    cont2_2:                 
                            cmp       selected_level_2, 3
                            CALL      DrawLevel3_2
-    cont_2:                
+    cont_2:                  
                            CALL      DrawPadel_2
                            mov       ball_color_2, 2
                            CALL      DrawBall_2
                            mov       bx,0
-    ResetAllGifts_2:       
+    ResetAllGifts_2:         
                            mov       byte ptr [gift_active_2+bx], 0
                            mov       gift_x_2, 0
                            mov       gift_y_2, 0
-                           inc       bx
+                           inc       bl
                            cmp       bl,[gift_count_2]
                            jne       ResetAllGifts_2
                            CALL      DrawPadel_2
-
-
-                           mov       ah, 0
-                           int       16h
+                           mov inReset_2, 1
                            RET
 ResetAll_2 ENDP
 
@@ -787,6 +839,7 @@ MoveGift PROC
                            mov       cl, gift_count
                            mov       ch,0
                            xor       bx, bx
+
                         
 
     LoopMoveGifts:         
@@ -795,31 +848,12 @@ MoveGift PROC
 
 
     ; Check if gift is active
-                           cmp       [gift_active+bx], 0               ; Is the gift active?
+                           cmp       [gift_active + bx], 0               ; Is the gift active?
                            je        SkipGift
                            
     ; Decrement counter
                            dec       [gift_counter]                    ; Decrement gift's counter
                            jnz       SkipGift
-                        
-                           push      cx
-                           push      ax
-                           push     dx
-                           push     si
-                           push     di
-                           push     bx
-
-                           mov       gift_color, 0
-                           mov       bow_color, 0
-                           mov       ribbon_color, 0
-
-                           CALL      DrawGift
-                           pop      bx
-                           pop      di
-                           pop      si 
-                           pop       dx
-                           pop       ax
-                           pop       cx
 
     ; Reset counter
                            mov       ax, gift_speed
@@ -830,9 +864,6 @@ MoveGift PROC
                            add       ax, gift_dy
                            mov       [gift_y], ax                      ; Update Y positionFre
                            
-                           
-
-
     continue_move_gift:    
                            cmp       ax, 590
                            jl        check_gift_collision
@@ -1035,19 +1066,19 @@ MoveGift_2 PROC
 MoveGift_2 ENDP
 
 DrawGift PROC
+                           push      bx                                ; Check if the gift is active
                            mov       bl, [current_gift_counter]
                            mov       bh,0
-                           cmp       [gift_active+bx], 0
-                           push      bx                                ; Check if the gift is active
+                           cmp       [gift_active + bx], 0
                            je        SkipDrawing                       ; Skip if not active
 
 
     ; Use calculated offsets to access gift_x_list and gift_y_list
                            mov       cx, gift_x                        ; Get X position of the gift
                            mov       dx, gift_y                        ; Get Y position of the gift
-                           mov       bx, gift_size                     ; Load the gift size
                            push      cx
                            push      dx
+                           mov       bx, gift_size                     ; Load the gift size
                            mov       si, 0
     DrawColumnG:           
                            push      cx
@@ -2074,6 +2105,7 @@ ClearBrick proc
 
     same_lvl:              
                            CALL      SpawnGift
+                           
                            pop       si
                            pop       di
                            pop       dx
@@ -2188,6 +2220,7 @@ SpawnGift PROC
                            push      cx
                            call      RandomByte
                            pop       cx
+                           MOV AL, 1;
                            and       al, 1
                            cmp       al, 0
                            je        NoSlotAvailable
@@ -2196,6 +2229,7 @@ SpawnGift PROC
                            mov       ax, bx
                            shl       ax, 1
                            mov       si, ax
+                           
 
                            mov       [gift_active+bx], 1               ; Activate the gift
                            mov       ax, ball_x
@@ -2209,6 +2243,12 @@ SpawnGift PROC
                            cmp       current_gift, cx                  ; Check if it exceeds gift_count
                            jl        SkipWrapAround
                            mov       [current_gift],0
+                           inc       current_gift_counter
+                           cmp       current_gift_counter, 3
+                           jne testfail
+                           mov ah, 0
+                           int 16h
+                           testfail:
 
     SkipWrapAround:        
                            ret
@@ -2270,6 +2310,12 @@ SpawnGift_2 PROC
                            cmp       current_gift_2 ,cx                ; Check if it exceeds gift_count
                            jl        SkipWrapAround_2
                            mov       [current_gift_2],0
+                                                      inc       current_gift_counter_2
+                           cmp       current_gift_counter_2, 3
+                           jne testfail_2
+                           mov ah, 0
+                           int 16h
+                           testfail_2:
 
     SkipWrapAround_2:      
                            ret
@@ -2285,145 +2331,87 @@ SpawnGift_2 ENDP
 
 
 MAIN PROC
-                           MOV       AX, @DATA
-                           MOV       DS, AX
+    MOV       AX, @DATA
+    MOV       DS, AX
 
-    ;  MOV       AH, 0                           ;following 3 lines to enter graphic mode
-    ;  MOV       AL, 13h
-    ;  INT       10h
-                           mov  dx,3fbh
-                           mov  al,10000000b
-                           out  dx,al
+    MOV       AX, 4F02h
+    MOV       BX, 103h
+    INT       10h
 
-                           mov  dx,3f8h
-                           mov  al,0ch
-                           out  dx,al
+    CALL      DrawLevel1
+    CALL      DrawLevel1_2
 
-                           mov  dx,3f9h
-                           mov  al,00h
-                           out  dx,al
+    lea si, songNotes
+    push si
+gameLoop:
 
-                           mov  dx,3fbh
-                           mov  al,00011011b
-                           out  dx,al
+    CMP       inReset, 1
+    JE        waitForReset1
+    Collision selected_level
+    CALL      DrawPadel
+    CALL      MovePadel
+    MOV       ball_color, 0
+    CALL      DrawBall
+    CALL      MoveBall
+    MOV       BL, gift_ball_color
+    MOV       ball_color, BL
+    CALL      DrawBall
+    CALL      GiftLogic_1
+    JMP       skipPlayer1
 
-                            
-                           MOV       AX, 4F02h                         ; VESA function to set mode
-                           MOV       BX, 103h                          ; Mode 103h = 800x600 with 256 colors
-                           INT       10h
+waitForReset1:
+    mov cx, 1000h
+    waitloop:
+    loop waitloop
 
-                           call      DrawLevel1
-                           call      DrawLevel1_2
-    ;call DrawLevel2
-    ;call DrawLevel3
+    MOV       AH, 1
+    INT       16h
+    JNZ       resetPlayer1Done
+    JMP       skipPlayer1
 
-    gameLoop:              
-                          Collision selected_level                    ; a macro to determine which collision proc to call based on the current level
-                          Collision_2 selected_level_2
-                          CALL      DrawPadel
-                          CALL      DrawPadel_2
+resetPlayer1Done:
+    MOV       inReset, 0
 
-
-                          CALL      MovePadel
-                          CALL      MovePadel_2
-                         
- 
-                           mov       ball_color, 0
-                           mov       ball_color_2, 0
-
-                           call      DrawBall
-                           CALL      DrawBall_2
-
-                           call      MoveBall
-                           CALL      MoveBall_2
-
-                           mov       bl, gift_ball_color
-                           mov       ball_color, bl
-
-                           mov       bl, gift_ball_color_2
-                           mov       ball_color_2, bl
+skipPlayer1:
 
 
-                           call      DrawBall
-                           CALL      DrawBall_2
-                          
-                           mov       cl, gift_count
-                           cmp       current_gift_counter, cl
-                           jl        reset
-                           mov       cl ,0
-                           mov       current_gift_counter,cl
-    reset:                 
-                           
-                           CALL      MoveGift
-                           mov       bl,current_gift_counter
-                           mov       bh,0
-                           mov       al,[gift_colors_list+bx]
-                           mov       gift_color, al
-                           mov       al,[gift_ribbon_list+bx]
-                           mov       bow_color, al
-                           mov       ribbon_color, al
-                           CALL      DrawGift
+    CMP       inReset_2, 1
+    JE        waitForReset2
+    Collision_2 selected_level_2
+    CALL      DrawPadel_2
+    CALL      MovePadel_2
+    MOV       ball_color_2, 0
+    CALL      DrawBall_2
+    CALL      MoveBall_2
+    MOV       BL, gift_ball_color_2
+    MOV       ball_color_2, BL
+    CALL      GiftLogic_2
+    JMP       skipPlayer2
 
-                       
+waitForReset2:
+    mov cx, 1000h
+    waitloop_2:
+    loop waitloop_2
+    MOV       AH, 1
+    INT       16h
+    JNZ       resetPlayer2Done
+    JMP       skipPlayer2
 
-                           inc       current_gift_counter
-                           cmp       gift_ball_color, 2
-                           je        wait_30
+resetPlayer2Done:
+    MOV       inReset_2, 0
 
-                           inc       [gift_timer]
-                           mov       ax, [gift_timer]
-                           cmp       ax, 10000
-                           jb        wait_30
-                           mov       gift_ball_color, 2
-                           mov       [padel_width],50
+skipPlayer2:
+    CALL DrawBall_2
+    JMP gameLoop                     ; Restart the song from the beginning
+    ; :( too hard
 
-                           mov       gift_timer, 0
-                        
-    wait_30:               
-                           mov       cl, gift_count_2
-                           cmp       current_gift_counter_2, cl
-                           jl        reset_2
-                           mov       cl,0
-                           mov       current_gift_counter_2,cl
-    reset_2:                 
 
-                        
-                           CALL      MoveGift_2
-                           mov       bl,current_gift_counter_2
-                           mov       bh,0
-                           mov       al,[gift_colors_list_2+bx]
-                           mov       gift_color_2, al
-                           mov       al,[gift_ribbon_list_2+bx]
-                           mov       bow_color_2, al
-                           mov       ribbon_color_2, al
-
-                           CALL      DrawGift_2
-                       
-
-                           inc       current_gift_counter_2
-                           cmp       gift_ball_color_2, 2
-                           je        wait_30_2
-
-                           inc       [gift_timer_2]
-                           mov       ax, [gift_timer_2]
-                           cmp       ax, 10000
-                           jb        wait_30_2
-                           mov       gift_ball_color_2, 2
-                           mov       [padel_width_2],50
-
-                           mov       gift_timer_2, 0
-                        
-    wait_30_2:               
-    
-                        
-
-                           JMP       gameLoop
-
-                           MOV       AX, 4C00h
-                           INT       21h
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    MOV       AX, 4C00h
+    INT       21h
 MAIN ENDP
+
+
+
 
 beep proc
                            push      ax
@@ -2465,6 +2453,109 @@ beep proc
 
                         ret
 beep endp
+;description
+
+GiftLogic_1 PROC
+                           mov       cl, gift_count
+                           cmp       current_gift_counter, cl
+                           jl        reset
+                           mov       cl ,0
+                           mov       current_gift_counter, cl
+    reset:                 
+                           
+                           mov       bl,current_gift_counter
+                           mov       bh,0
+
+
+                           mov       gift_color, 0
+                           mov       bow_color, 0
+                           mov       ribbon_color, 0
+
+
+                           CALL      DrawGift
+
+                           mov       gift_color, 0
+                           mov       bow_color, 0
+                           mov       ribbon_color, 0
+
+                           
+                           CALL      MoveGift
+
+
+
+                           mov       al,[gift_colors_list+bx]
+                           mov       gift_color, al
+                           mov       al,[gift_ribbon_list+bx]
+                           mov       bow_color, al
+                           mov       ribbon_color, al
+
+
+
+                           CALL      DrawGift  
+
+
+
+                           ;inc       current_gift_counter
+                           cmp       gift_ball_color, 2
+                           je        wait_30
+
+                           inc       [gift_timer]
+                           mov       ax, [gift_timer]
+                           cmp       ax, 10000
+                           jb        wait_30
+                           mov       gift_ball_color, 2
+                           mov       [padel_width],50
+
+                           mov       gift_timer, 0
+                        
+    wait_30:  
+    ret
+GiftLogic_1 ENDP
+
+GiftLogic_2 PROC
+                           mov       cl, gift_count_2
+                           cmp       current_gift_counter_2, cl
+                           jl        reset_2
+                           mov       cl ,0
+                           mov       current_gift_counter_2,cl
+    reset_2:                 
+                           
+                           mov       bl,current_gift_counter_2
+                           mov       bh,0
+
+                           mov       gift_color_2, 0
+                           mov       bow_color_2, 0
+                           mov       ribbon_color_2, 0
+                           CALL      DrawGift_2
+
+                           CALL      MoveGift_2
+                           mov       al,[gift_colors_list_2+bx]
+                           mov       gift_color_2, al
+                           mov       al,[gift_ribbon_list_2+bx]
+                           mov       bow_color_2, al
+                           mov       ribbon_color_2, al
+                           
+                           CALL      DrawGift_2
+
+
+                       
+
+                           ;inc       current_gift_counter_2
+                           cmp       gift_ball_color_2, 2
+                           je        wait_30_2
+
+                           inc       [gift_timer_2]
+                           mov       ax, [gift_timer_2]
+                           cmp       ax, 10000
+                           jb        wait_30_2
+                           mov       gift_ball_color_2, 2
+                           mov       [padel_width_2],50
+
+                           mov       gift_timer_2, 0
+                        
+    wait_30_2:  
+    ret
+GiftLogic_2 ENDP
 
 END MAIN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
