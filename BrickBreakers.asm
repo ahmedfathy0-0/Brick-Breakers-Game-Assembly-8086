@@ -49,13 +49,17 @@
     rheight               dw  20
 
     ;score & level
-    score                 dw  0
     selected_level        db  0
 
+    score                 dw  0
+    display_score         dw  0
+    score_str             db 'Score: $'
     score1                equ 28                                                                                                       ; 4 * 7
     score2                equ 112                                                                                                      ; 4 * 7 + 7 * 12
     score3                equ 322                                                                                                      ; 4 * 7 + 7 * 12 + 10 * 21
 
+    lives_str             db 'Lives: $'
+    display_lives         db  5
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Brick gifts
@@ -128,13 +132,15 @@
     rheight_2             dw  20
 
     ;score & level
-    score_2               dw  0
     selected_level_2      db  0
 
+    score_2               dw  0
+    display_score_2       dw  0
     score1_2              equ 28                                                                                                       ; 4 * 7
     score2_2              equ 112                                                                                                      ; 4 * 7 + 7 * 12
     score3_2              equ 322                                                                                                      ; 4 * 7 + 7 * 12 + 10 * 21
 
+    display_lives_2         db  5
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Brick gifts
@@ -183,13 +189,13 @@ F8_freq    equ 740
 G8_freq    equ 698
 A8_freq    equ 659
 
-songNotes  dw F6_freq, E6_freq, D6_freq, C6_freq, D6_freq, E6_freq, G6_freq,
-            D6_freq, E6_freq, F6_freq, G6_freq, A6_freq, B6_freq, C7_freq,
-            B6_freq, A6_freq, G6_freq, F6_freq, E6_freq, D6_freq, C6_freq,
-            E6_freq, G6_freq, A6_freq, F6_freq, E6_freq, D6_freq, G6_freq,
-            A6_freq, G6_freq, B6_freq, C7_freq, E7_freq, D7_freq, G7_freq,
-            F6_freq, F7_freq, E7_freq, F6_freq, D6_freq, C6_freq, G6_freq,
-            A6_freq, D6_freq
+; songNotes  dw F6_freq, E6_freq, D6_freq, C6_freq, D6_freq, E6_freq, G6_freq,
+;             D6_freq, E6_freq, F6_freq, G6_freq, A6_freq, B6_freq, C7_freq,
+;             B6_freq, A6_freq, G6_freq, F6_freq, E6_freq, D6_freq, C6_freq,
+;             E6_freq, G6_freq, A6_freq, F6_freq, E6_freq, D6_freq, G6_freq,
+;             A6_freq, G6_freq, B6_freq, C7_freq, E7_freq, D7_freq, G7_freq,
+;             F6_freq, F7_freq, E7_freq, F6_freq, D6_freq, C6_freq, G6_freq,
+;             A6_freq, D6_freq
 
 noteCount  equ 40
 noteTimer      dw 100       ; Timer to control note playing
@@ -707,6 +713,9 @@ ResetAll PROC
                            mov       ball_dx, 0
                            mov       [gift_ball_color],2
                            mov       [gift_timer],0
+                           dec       display_lives
+                           cmp       display_lives, 0
+                        ;    jle        GAMEOVERdd
 
                            mov gift_color, 0
                             mov bow_color, 0
@@ -740,7 +749,7 @@ ResetAll PROC
                            CALL      DrawPadel
                            
                            mov inReset, 1
-
+GAMEOVER:
                            RET
 ResetAll ENDP
 ResetAll_2 PROC
@@ -756,6 +765,7 @@ ResetAll_2 PROC
                            mov       ball_dx_2, 0
                            mov       [gift_ball_color_2],2
                            mov       [gift_timer_2],0
+                           dec       display_lives_2
 
                            mov gift_color_2, 0
                             mov bow_color_2, 0
@@ -2054,6 +2064,69 @@ Collision3_2 proc
                            ret
 Collision3_2 endp
 
+DisplayScore proc
+push ax
+push bx
+push cx
+push dx
+
+mov ah, 2
+mov dx, 0B0Ah
+int 10h
+
+mov ah,9
+mov dx, offset score_str
+int 21h
+
+xor   cx,cx
+mov   ax, display_score
+mov   bx,10
+divLoop:      
+xor   dx,dx
+div   bx
+push  dx
+inc   cx
+cmp   ax,0
+ja    divLoop
+
+mov   ah, 0Eh
+printLoop:    
+pop   dx
+mov   al,dl
+or    al,'0'
+int   10h
+loop  printLoop
+
+pop dx
+pop cx
+pop bx
+pop ax
+ret
+DisplayScore endp
+
+DisplayLives proc
+push ax
+push bx
+push dx
+    mov ah, 2
+    mov dx, 0B1Fh
+    int 10h
+
+    mov ah, 9
+    mov dx, offset lives_str
+    int 21h
+
+    mov   bl, 04h
+    mov   ah, 0Eh
+    mov   al, display_lives
+    or    al, '0'
+    int   10h
+pop dx
+pop bx
+pop ax
+ret
+DisplayLives endp
+
 ClearBrick proc
                            push      ax
                            push      bx
@@ -2062,11 +2135,13 @@ ClearBrick proc
                            push      di
                            push      si
 
-
+                           add       display_score, 1
+                           CALL      DisplayScore
                            CALL      beep
                            neg       ball_dy
                            mov       bricks[bx], 0
-                           add       score, 1
+                           inc       score
+
                            mov       al, 0
 
                            cmp       selected_level, 1
@@ -2116,6 +2191,68 @@ ClearBrick proc
                            ret
 ClearBrick endp
 
+DisplayScore_2 proc
+push ax
+push bx
+push cx
+push dx
+
+mov ah, 2
+mov dx, 0B3Ch
+int 10h
+
+mov ah,9
+mov dx, offset score_str
+int 21h
+
+xor   cx,cx
+mov   ax, display_score_2
+mov   bx,10
+divLoop_2:      
+xor   dx,dx
+div   bx
+push  dx
+inc   cx
+cmp   ax,0
+ja    divLoop_2
+
+mov   ah, 0Eh
+printLoop_2:    
+pop   dx
+mov   al,dl
+or    al,'0'
+int   10h
+loop  printLoop_2
+
+pop dx
+pop cx
+pop bx
+pop ax
+ret
+DisplayScore_2 endp
+
+DisplayLives_2 proc
+push ax
+push bx
+push dx
+    mov ah, 2
+    mov dx, 0B51h
+    int 10h
+
+    mov ah, 9
+    mov dx, offset lives_str
+    int 21h
+    mov   bl, 04h
+    mov   ah, 0Eh
+    mov   al, display_lives_2
+    or    al, '0'
+    int   10h
+pop dx
+pop bx
+pop ax
+ret
+DisplayLives_2 endp
+
 ClearBrick_2 proc
                            push      ax
                            push      bx
@@ -2125,11 +2262,13 @@ ClearBrick_2 proc
                            push      si
 
 
+                           add       display_score_2, 1
+                           CALL      DisplayScore_2
                            CALL      beep
                            neg       ball_dy_2
-
                            mov       bricks_2[bx], 0
                            add       score_2, 1
+
                            mov       al, 0
 
                            cmp       selected_level_2, 1
@@ -2402,6 +2541,12 @@ resetPlayer2Done:
 
 skipPlayer2:
     CALL DrawBall_2
+
+
+    CALL      DisplayScore
+    CALL      DisplayLives
+    CALL      DisplayScore_2
+    CALL      DisplayLives_2
     JMP gameLoop                     ; Restart the song from the beginning
     ; :( too hard
 
