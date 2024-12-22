@@ -3,6 +3,13 @@
 .STACK 100h
 
 .DATA
+    appMode               DB  1 ; 1 for game, 2 for chat, 3 for scoreboard if existed
+    start_game_str        DB 'Start Game$'
+    chat_str              DB 'Chat$'
+    score_board_str       DB 'Score Board$'
+    chat_demo_str         DB 'Chat Demo$'
+    board_demo_str        DB 'Score Board Demo$'
+    mode_label            DB '=> $'
     padel_x1              DW  174
     padel_x2              DW  224
     padel_y1              DW  581
@@ -2472,6 +2479,156 @@ SpawnGift_2 ENDP
 MAIN PROC
     MOV       AX, @DATA
     MOV       DS, AX
+    mov ah, 0
+    mov al, 4h
+    int 10h
+main_menu:
+        mov ax, 0600h
+        mov bh, 0
+        mov cx, 0
+        mov dx, 184Fh
+        int 10h
+        cmp appMode, 1
+        jne skip_start_game_label
+        mov ah,2
+        mov dx,0605h
+        int 10h
+        mov ah, 9
+        mov dx, offset mode_label
+        int 21h
+    skip_start_game_label:
+        mov ah,2
+        mov dx,0608h
+        int 10h
+        mov ah, 9
+        mov dx, offset start_game_str
+        int 21h
+
+        cmp appMode, 2
+        jne skip_chat_label
+        mov ah,2
+        mov dx,0A05h
+        int 10h
+        mov ah, 9
+        mov dx, offset mode_label
+        int 21h
+    skip_chat_label:
+        mov ah,2
+        mov dx,0A08h
+        int 10h
+        mov ah, 9
+        mov dx, offset chat_str
+        int 21h
+
+        cmp appMode, 3
+        jne skip_score_board_label
+        mov ah,2
+        mov dx,0E05h
+        int 10h
+        mov ah, 9
+        mov dx, offset mode_label
+        int 21h
+    skip_score_board_label:
+        mov ah,2
+        mov dx,0E08h
+        int 10h
+        mov ah, 9
+        mov dx, offset score_board_str
+        int 21h
+
+    skipInput:
+    mov ah,0
+    int 16h
+        cmp ah, 50h  ; Check if the pressed key is Down Arrow (Scan code 50h)
+        je incAppMode
+        cmp ah, 48h  ; Check if the pressed key is Up Arrow (Scan code 48h)
+        je decAppMode
+        cmp al, 0Dh  ; Check if the pressed key is Enter (ASCII 0Dh)
+        je checkAppMode
+        jmp skipInput
+
+    incAppMode:
+        cmp appMode, 3
+        je  setAppModeToOne
+        inc appMode
+        jmp main_menu
+    setAppModeToOne:
+        mov appMode, 1
+        jmp main_menu
+
+    decAppMode:
+        cmp appMode, 1
+        je  setAppModeToThree
+        dec appMode
+        jmp main_menu
+    setAppModeToThree:
+        mov appMode, 3
+        jmp main_menu
+
+    checkAppMode:
+        cmp appMode, 1
+        je callGame
+        cmp appMode, 2
+        je callChat
+        cmp appMode, 3
+        je callBoard
+        jmp main_menu ; redundant
+
+    callGame:
+        call GAME
+        jmp main_menu
+
+    callChat:
+        call CHAT
+        jmp main_menu
+
+    callBoard:
+        call SCORE_BOARD
+        jmp main_menu
+
+    MOV       AX, 4C00h
+    INT       21h
+MAIN ENDP
+
+SCORE_BOARD PROC
+    mov ax,0600h
+    mov cx,0
+    mov dx,184FH
+    int 10h
+    mov ah, 2
+    mov dx, 0
+    int 10h
+    mov ah, 9
+    mov dx, offset board_demo_str
+    int 21h
+continueBoard:
+    mov ah,0
+    int 16h
+    cmp al, 1Bh  ; Check if the pressed key is ESC (ASCII 1Bh)
+    jne continueBoard
+    ret
+SCORE_BOARD ENDP
+
+CHAT PROC
+    mov ax,0600h
+    mov cx,0
+    mov dx,184FH
+    int 10h
+    mov ah, 2
+    mov dx, 0
+    int 10h
+    mov ah, 9
+    mov dx, offset chat_demo_str
+    int 21h
+continueChat:
+    mov ah,0
+    int 16h
+    cmp al, 1Bh  ; Check if the pressed key is ESC (ASCII 1Bh)
+    jne continueChat
+    ret
+CHAT ENDP
+
+GAME PROC
 
     MOV       AX, 4F02h
     MOV       BX, 103h
@@ -2549,13 +2706,8 @@ skipPlayer2:
     CALL      DisplayLives_2
     JMP gameLoop                     ; Restart the song from the beginning
     ; :( too hard
-
-
-    MOV       AX, 4C00h
-    INT       21h
-MAIN ENDP
-
-
+ret
+GAME ENDP
 
 
 beep proc
@@ -2703,46 +2855,3 @@ GiftLogic_2 PROC
 GiftLogic_2 ENDP
 
 END MAIN
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; CheckCollision proc
-    ;                         push ax
-    ;                         push bx
-    ;                         push cx
-    ;                         push dx
-
-    ;                         mov  ax, rowStart[di]
-    ;                         sub  ax, ball_size
-    ;                         cmp  ax, ball_y
-    ;                         jg   no_collision
-
-    ;                         add  ax, rheight
-    ;                         add  ax, ball_size
-    ;                         cmp  ax, ball_y
-    ;                         jl   no_collision
-
-    ;                         mov  ax, colStart[si]
-    ;                         sub  ax, ball_size
-    ;                         cmp  ax, ball_x
-    ;                         jg   no_collision
-
-    ;                         add  ax, rwidth
-    ;                         add  ax, ball_size
-    ;                         cmp  ax, ball_x
-    ;                         jl   no_collision
-                        
-    ;                         mov  ax, di
-    ;                         mov  cx, 7
-    ;                         mul  cx
-    ;                         mov  bx, ax
-    ;                         add  bx, si
-    ;                         mov  bricks[bx], 0
-    ;                         CALL beep
-    ;                         CALL ClearBrick
-
-    ;     no_collision:
-    ;                         pop  dx
-    ;                         pop  cx
-    ;                         pop  bx
-    ;                         pop  ax
-    ;                         ret
-    ; CheckCollision end
