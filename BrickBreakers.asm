@@ -94,13 +94,15 @@
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    padel_x1_2            DW  574
-    padel_x2_2            DW  624
+    padel_x_2               DW  599
+    padel_x1_2              DW  0
+    padel_x2_2              DW  0
+
     padel_y1_2            DW  581
     padel_y2_2            DW  590
     padel_color_2         db  4
     padel_speed_2         equ 7
-    padel_width_2         dw  70
+    padel_width_2         dw  40
 
     ball_x_2              DW  599
     ball_y_2              DW  560
@@ -304,60 +306,33 @@ DrawPadel ENDP
 
 
 DrawPadel_2 PROC
-                           mov       cx, padel_x1_2
                            mov       dx, padel_y1_2
-                           mov       al, padel_color_2
-                           mov       ah, 0ch
-    draw_top_2:            
-                           int       10h
-                           inc       cx
-                           cmp       cx, padel_x2_2
-                           jnz       draw_top_2
-
-                           mov       cx, padel_x1_2
-                           mov       dx, padel_y1_2
-    draw_left_2:           
-                           int       10h
-                           inc       dx
-                           cmp       dx, padel_y2_2
-                           jnz       draw_left_2
-
-                           mov       cx, padel_x2_2
-                           mov       dx, padel_y1_2
-    draw_right_2:          
-                           int       10h
-                           inc       dx
-                           cmp       dx, padel_y2_2
-                           jnz       draw_right_2
-
-                           mov       cx, padel_x1_2
-                           mov       dx, padel_y2_2
-    draw_bottom_2:         
-                           int       10h
-                           inc       cx
-                           cmp       cx, padel_x2_2
-                           jnz       draw_bottom_2
-
-                           mov       dx, padel_y1_2
-    fill_outer_2:          
+    fill_outer_2:            
                            inc       dx
                            cmp       dx, padel_y2_2
                            jz        end_Draw_2
 
-                           mov       cx, padel_x1_2
-    fill_inner_2:          
+                           mov       ax, padel_x_2  
+                           sub       ax, padel_width_2       
+                           mov       padel_x1_2, ax    
+                           mov       ax, padel_x_2     
+                           add       ax, padel_width_2       
+                           mov       padel_x2_2, ax   
+
+                           mov       cx, padel_x1_2    
+    fill_inner_2:            
                            inc       cx
-                           cmp       cx, padel_x2_2
+                           cmp       cx, padel_x2_2    
                            jz        fill_outer_2
 
                            mov       ah, 0ch
+                           mov       al,[padel_color_2]
                            int       10h
                            jmp       fill_inner_2
 
-    end_Draw_2:            
+    end_Draw_2:              
                            RET
 DrawPadel_2 ENDP
-
 
     ; MovePadel PROC
     ;                          mov       ax, 3
@@ -713,6 +688,7 @@ MoveBall_2 PROC
                            RET
 MoveBall_2 ENDP
 ResetAll PROC
+                           
                            mov       ball_x, 199
                            mov       ball_y, 560
                            mov       ball_dx, ball_og_speed
@@ -723,6 +699,16 @@ ResetAll PROC
                            mov       padel_y2, 590
                            mov       ball_dy, 2
                            mov       ball_dx, 0
+
+                           mov       gift_color, 0
+                           mov       bow_color, 0
+                           mov       ribbon_color, 0
+                           
+                           push      bx
+                           mov       bx, [current_gift_counter]
+                           CALL      DrawGift
+                           pop       bx
+
                            mov       [gift_ball_color],2
                            mov       [padel_width],40
                            mov       [padel_x] ,199
@@ -731,10 +717,8 @@ ResetAll PROC
                            cmp       display_lives, 0
                         ;    jle        GAMEOVERdd
 
-                           mov gift_color, 0
-                            mov bow_color, 0
-                            mov ribbon_color, 0
-                            CALL DrawGift
+                           
+
                            CALL      ClearScreen
                            cmp       selected_level, 1
                            jnz       cont1
@@ -859,7 +843,7 @@ ResetBricks_2 proc
 ResetBricks_2 endp
 
 DrawGift PROC
-                         cmp       [gift_active+bx], 0
+                         cmp       [gift_active + bx], 0
                          push      bx                              ; Check if the gift is active
                          je        SkipDrawing                     ; Skip if not active
 
@@ -2352,10 +2336,10 @@ GAME PROC
     MOV       BX, 103h
     INT       10h
 
-    ;CALL      DrawLevel1
-    CALL      DrawLevel2
+    CALL      DrawLevel1
     CALL      DrawLevel1_2
 
+    ; CALL      DrawLevel2
     ; lea si, songNotes
     ; push si
 
