@@ -10,13 +10,14 @@
     chat_demo_str         DB 'Chat Demo$'
     board_demo_str        DB 'Score Board Demo$'
     mode_label            DB '=> $'
-    padel_x1              DW  174
-    padel_x2              DW  224
+    padel_x               DW  199
+    padel_x1              DW  0
+    padel_x2              DW  0
     padel_y1              DW  581
     padel_y2              DW  590
     padel_color           db  4
     padel_speed           equ 7
-    padel_width           dw  70
+    padel_width           dw  40
 
     ball_x                DW  199
     ball_y                DW  560
@@ -76,7 +77,7 @@
     gift_color            db  ?
     ribbon_color          db  ?
     bow_color             db  ?
-    gift_count            db  5
+    gift_count            dw  5
     backgournd_color      db  5 dup(0)
     gift_active           db  5 dup(0)
     gift_x                dw  5
@@ -86,10 +87,10 @@
     gift_ribbon_list      db  4,11,2,4,5
     gift_ball_color       db  2
     gift_timer            dw  0
-    current_gift          dw  0
+    current_gift          dw  4
     is_there_gift         db  0
     
-    current_gift_counter  db  0
+    current_gift_counter  dw  0
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -273,26 +274,34 @@ ClearScreen_2 ENDP
 
 
 DrawPadel PROC
-
                            mov       dx, padel_y1
     fill_outer:            
                            inc       dx
                            cmp       dx, padel_y2
                            jz        end_Draw
 
-                           mov       cx, padel_x1
+                           mov       ax, padel_x     
+                           sub       ax, padel_width       
+                           mov       padel_x1, ax    
+                           mov       ax, padel_x     
+                           add       ax, padel_width       
+                           mov       padel_x2, ax   
+
+                           mov       cx, padel_x1    
     fill_inner:            
                            inc       cx
-                           cmp       cx, padel_x2
+                           cmp       cx, padel_x2    
                            jz        fill_outer
 
                            mov       ah, 0ch
+                           mov       al,[padel_color]
                            int       10h
                            jmp       fill_inner
 
     end_Draw:              
                            RET
 DrawPadel ENDP
+
 
 DrawPadel_2 PROC
                            mov       cx, padel_x1_2
@@ -403,23 +412,19 @@ MovePadel PROC
     MoveRight:             
                            cmp       padel_x2, 399
                            jge       stop_move
-                           mov       al, 0
+                           mov [padel_color],0
                            call      DrawPadel
-                           add       padel_x1, padel_speed
-                           add       padel_x2, padel_speed
-                           mov       padel_color, 4
+                           mov [padel_color],4 
+                           add       padel_x, padel_speed
                            RET
                      
     MoveLeft:              
                            cmp       padel_x1, 10
                            jle       stop_move
-                                                      mov       al, 0
-
-
+                           mov [padel_color],0
                            call      DrawPadel
-                           sub       padel_x1, padel_speed
-                           sub       padel_x2, padel_speed
-                           mov       padel_color, 4
+                           mov [padel_color],4 
+                           sub       padel_x, padel_speed
                            RET
     stop_move:             
                            RET
@@ -719,6 +724,8 @@ ResetAll PROC
                            mov       ball_dy, 2
                            mov       ball_dx, 0
                            mov       [gift_ball_color],2
+                           mov       [padel_width],40
+                           mov       [padel_x] ,199
                            mov       [gift_timer],0
                            dec       display_lives
                            cmp       display_lives, 0
@@ -751,7 +758,7 @@ ResetAll PROC
                            mov       gift_x, 0
                            mov       gift_y, 0
                            inc       bl
-                           cmp       bl,[gift_count]
+                           cmp       bx,[gift_count]
                            jne       ResetAllGifts
                            CALL      DrawPadel
                            
@@ -777,7 +784,7 @@ ResetAll_2 PROC
                            mov gift_color_2, 0
                             mov bow_color_2, 0
                             mov ribbon_color_2, 0
-                            CALL DrawGift_2
+                            ;CALL DrawGift_2
                            CALL      ClearScreen_2
                            cmp       selected_level_2, 1
                            jnz       cont1_2
@@ -851,414 +858,219 @@ ResetBricks_2 proc
                            ret
 ResetBricks_2 endp
 
-MoveGift PROC
-                           push      bx
-                           mov       cl, gift_count
-                           mov       ch,0
-                           xor       bx, bx
-
-                        
-
-    LoopMoveGifts:         
-                           cmp       bx, cx
-                           jge       EndMove
-
-
-    ; Check if gift is active
-                           cmp       [gift_active + bx], 0               ; Is the gift active?
-                           je        SkipGift
-                           
-    ; Decrement counter
-                           dec       [gift_counter]                    ; Decrement gift's counter
-                           jnz       SkipGift
-
-    ; Reset counter
-                           mov       ax, gift_speed
-                           mov       [gift_counter], ax
-
-    ; Move gift down
-                           mov       ax, gift_y
-                           add       ax, gift_dy
-                           mov       [gift_y], ax                      ; Update Y positionFre
-                           
-    continue_move_gift:    
-                           cmp       ax, 590
-                           jl        check_gift_collision
-                           mov       byte ptr [gift_active+bx], 0
-                           mov       [is_there_gift],0
-                           jmp       SkipGift
-                        
-    check_gift_collision:  
-                           mov       ax, gift_y
-                           add       ax, gift_size
-                           cmp       ax, padel_y1
-                           jl        SkipGift
-
-                           mov       ax, gift_y
-                           add       ax, ball_size
-                           cmp       ax, padel_y2
-                           jg        SkipGift
-
-                           mov       ax, gift_x
-                           add       ax, gift_size
-                           cmp       ax, padel_x1
-                           jl        SkipGift
-                     
-                           mov       ax, gift_x
-                           add       ax, gift_size
-                           cmp       ax, padel_x2
-                           jg        SkipGift
-                        
-                           cmp       [gift_colors_list+bx],2           ; Check if gift_color is 2
-                           je        SetColor4                         ; Jump to set gift_ball_color to 4
-
-                           cmp       [gift_colors_list+bx], 5          ; Check if gift_color is 5
-                           je        SetColor14                        ; Jump to set gift_ball_color to 14
-
-                           cmp       [gift_colors_list+bx], 9          ; Check if gift_color is 9
-                           je        SetColor5                         ; Jump to set gift_ball_color to 5
-
-                           cmp       [gift_colors_list+bx], 14         ; Check if gift_color is 14
-                           je        SetColor1                         ; Jump to set gift_ball_color to 1
-
-                           cmp       [gift_colors_list+bx], 15         ; Check if gift_color is 15
-                           je        SetColor13                        ; Jump to set gift_ball_color to 13
-
-                           jmp       EndSetColor                       ; Skip to end if no condition matches
-
-    SetColor4:             
-                           mov       [gift_ball_color], 4
-                           jmp       EndSetColor                       ; Jump to end
-
-    SetColor14:            
-                           mov       [gift_ball_color], 14
-                           mov       [padel_width],90
-                           jmp       EndSetColor                       ; Jump to end
-
-    SetColor5:             
-                           mov       [gift_ball_color], 5
-                           mov       [padel_width],30
-                           jmp       EndSetColor                       ; Jump to end
-
-    SetColor1:             
-                           mov       [gift_ball_color], 1
-                           mov       padel_x1,155
-                           mov       padel_x2, 165
-                           jmp       EndSetColor                       ; Jump to end
-
-    SetColor13:            
-                           mov       [gift_ball_color], 13
-
-    EndSetColor:           
-                           mov       gift_timer, 0                     ; Reset gift_timer
-
-
-    SkipGift:              
-                           inc       bx
-                           jmp       LoopMoveGifts
-
-    EndMove:               
-                           pop       bx
-                           ret
-MoveGift ENDP
-
-MoveGift_2 PROC
-                           push      bx
-                           mov       cl, gift_count_2
-                           mov       ch,0
-                           xor       bx, bx
-                        
-
-    LoopMoveGifts_2:       
-                           cmp       bx, cx
-                           jge       EndMove_2
-
-
-    ; Check if gift is active
-                           cmp       [gift_active_2+bx], 0             ; Is the gift active?
-                           je        SkipGift_2
-
-    ; Decrement counter
-                           dec       [gift_counter_2]                  ; Decrement gift's counter
-                           jnz       SkipGift_2
-                        
-                           push      cx
-                           push      ax
-                           mov       gift_color_2, 0
-                           mov       bow_color_2, 0
-                           mov       ribbon_color_2, 0
-
-                           CALL      DrawGift_2
-                           pop       ax
-                           pop       cx
-
-    ; Reset counter
-                           mov       ax, gift_speed_2
-                           mov       [gift_counter_2], ax
-
-    ; Move gift down
-                           mov       ax, gift_y_2
-                           add       ax, gift_dy_2
-                           mov       [gift_y_2], ax                    ; Update Y positionFre
-
-    continue_move_gift_2:  
-                           cmp       ax, 590
-                           jl        check_gift_collision_2
-                           mov       byte ptr [gift_active_2+bx], 0
-                           mov       [is_there_gift_2],0
-                           jmp       SkipGift_2
-                        
-    check_gift_collision_2:
-                           mov       ax, gift_y_2
-                           add       ax, gift_size_2
-                           cmp       ax, padel_y1_2
-                           jl        SkipGift_2
-
-                           mov       ax, gift_y_2
-                           add       ax, ball_size_2
-                           cmp       ax, padel_y2_2
-                           jg        SkipGift_2
-
-                           mov       ax, gift_x_2
-                           add       ax, gift_size_2
-                           cmp       ax, padel_x1_2
-                           jl        SkipGift_2
-                     
-                           mov       ax, gift_x_2
-                           add       ax, gift_size_2
-                           cmp       ax, padel_x2_2
-                           jg        SkipGift_2
-                        
-                           cmp       [gift_colors_list_2+bx],2         ; Check if gift_color is 2
-                           je        SetColor4_2                       ; Jump to set gift_ball_color to 4
-
-                           cmp       [gift_colors_list_2+bx], 5        ; Check if gift_color is 5
-                           je        SetColor14_2                      ; Jump to set gift_ball_color to 14
-
-                           cmp       [gift_colors_list_2+bx], 9        ; Check if gift_color is 9
-                           je        SetColor5_2                       ; Jump to set gift_ball_color to 5
-
-                           cmp       [gift_colors_list_2+bx], 14       ; Check if gift_color is 14
-                           je        SetColor1_2                       ; Jump to set gift_ball_color to 1
-
-                           cmp       [gift_colors_list_2+bx], 15       ; Check if gift_color is 15
-                           je        SetColor13_2                      ; Jump to set gift_ball_color to 13
-
-                           jmp       EndSetColor_2                     ; Skip to end if no condition matches
-
-    SetColor4_2:           
-                           mov       [gift_ball_color_2], 4
-                           jmp       EndSetColor_2                     ; Jump to end
-
-    SetColor14_2:          
-                           mov       [gift_ball_color_2], 14
-                           mov       [padel_width_2],90
-                           jmp       EndSetColor_2                     ; Jump to end
-
-    SetColor5_2:           
-                           mov       [gift_ball_color], 5
-                           mov       [padel_width_2],30
-                           jmp       EndSetColor_2                     ; Jump to end
-
-    SetColor1_2:           
-                           mov       [gift_ball_color_2], 1
-                           mov       padel_x1_2,155
-                           mov       padel_x2_2, 165
-                           jmp       EndSetColor_2                     ; Jump to end
-
-    SetColor13_2:          
-                           mov       [gift_ball_color_2], 13
-
-    EndSetColor_2:         
-                           mov       gift_timer_2, 0                   ; Reset gift_timer
-
-
-    SkipGift_2:            
-                           inc       bx
-                           jmp       LoopMoveGifts_2
-
-    EndMove_2:             
-                           pop       bx
-                           ret
-MoveGift_2 ENDP
-
 DrawGift PROC
-                           push      bx                                ; Check if the gift is active
-                           mov       bl, [current_gift_counter]
-                           mov       bh,0
-                           cmp       [gift_active + bx], 0
-                           je        SkipDrawing                       ; Skip if not active
+                         cmp       [gift_active+bx], 0
+                         push      bx                              ; Check if the gift is active
+                         je        SkipDrawing                     ; Skip if not active
 
 
     ; Use calculated offsets to access gift_x_list and gift_y_list
-                           mov       cx, gift_x                        ; Get X position of the gift
-                           mov       dx, gift_y                        ; Get Y position of the gift
-                           push      cx
-                           push      dx
-                           mov       bx, gift_size                     ; Load the gift size
-                           mov       si, 0
-    DrawColumnG:           
-                           push      cx
-                           mov       di, 0
-    DrawRowG:              
-                           mov       ah, 0Ch
-                           mov       al, gift_color
-                           int       10h
+                         mov       cx, gift_x                      ; Get X position of the gift
+                         mov       dx, gift_y                      ; Get Y position of the gift
+                         mov       bx, gift_size                   ; Load the gift size
+                         push      cx
+                         push      dx
+                         mov       si, 0
+    DrawColumnG:         
+                         push      cx
+                         mov       di, 0
+    DrawRowG:            
+                         mov       ah, 0Ch
+                         mov       al, gift_color
+                         int       10h
 
-                           inc       cx
-                           inc       di
-                           cmp       di, bx
-                           jl        DrawRowG
-                           pop       cx
-                           inc       dx
-                           inc       si
-                           cmp       si, bx
-                           jl        DrawColumnG
-                           pop       dx
-                           pop       cx
-                           push      cx
-                           push      dx
+                         inc       cx
+                         inc       di
+                         cmp       di, bx
+                         jl        DrawRowG
+                         pop       cx
+                         inc       dx
+                         inc       si
+                         cmp       si, bx
+                         jl        DrawColumnG
+                         pop       dx
+                         pop       cx
+                         push      cx
+                         push      dx
 
     ; Draw horizontal ribbon
-                           mov       si, gift_size
-                           shr       si, 1
-                           add       dx, si
-                           mov       di, 0
-    RibbonHorizontal:      
-                           mov       ah, 0Ch
-                           mov       al, ribbon_color
-                           int       10h
+                         mov       si, gift_size
+                         shr       si, 1
+                         add       dx, si
+                         mov       di, 0
+    RibbonHorizontal:    
+                         mov       ah, 0Ch
+                         mov       al, ribbon_color
+                         int       10h
 
-                           inc       cx
-                           inc       di
-                           cmp       di, bx
-                           jl        RibbonHorizontal
+                         inc       cx
+                         inc       di
+                         cmp       di, bx
+                         jl        RibbonHorizontal
 
     ; Draw vertical ribbon
-                           pop       dx
-                           pop       cx
-                           push      cx
-                           push      dx
-                           add       cx, si
-                           mov       di, 0
-    RibbonVertical:        
+                         pop       dx
+                         pop       cx
+                         push      cx
+                         push      dx
+                         add       cx, si
+                         mov       di, 0
+    RibbonVertical:      
     ; Set pixel for ribbon (Vertical)
 
-                           mov       ah, 0Ch
-                           mov       al, ribbon_color
-                           int       10h
+                         mov       ah, 0Ch
+                         mov       al, ribbon_color
+                         int       10h
 
-                           inc       dx
-                           inc       di
-                           cmp       di, bx
-                           jl        RibbonVertical
+                         inc       dx
+                         inc       di
+                         cmp       di, bx
+                         jl        RibbonVertical
 
     ; Draw bow (top decoration)
-                           pop       dx
-                           pop       cx
-                           mov       di, 0
-    DrawBow:               
-                           mov       ah, 0Ch
-                           mov       al, bow_color
-                           int       10h
+                         pop       dx
+                         pop       cx
+                         mov       di, 0
+    DrawBow:             
+                         mov       ah, 0Ch
+                         mov       al, bow_color
+                         int       10h
 
-                           inc       cx
-                           inc       di
-                           cmp       di, gift_size
-                           jl        DrawBow
-    SkipDrawing:           
-                           pop       bx
-                           RET
+                         inc       cx
+                         inc       di
+                         cmp       di, gift_size
+                         jl        DrawBow
+    SkipDrawing:         
+                         pop       bx
+                         RET
 DrawGift ENDP
 
-DrawGift_2 PROC
-                           mov bl, [current_gift_counter_2]
-                            mov bh,0
-                           cmp       [gift_active_2+bx], 0
-                           push      bx                                ; Check if the gift is active
-                           je        SkipDrawing_2                     ; Skip if not active
+
+MoveGift PROC
+                         push      bx
+                         mov       cx, gift_count
+                         xor       bx, bx
+                        
+
+    LoopMoveGifts:       
+                         cmp       bx, cx
+                         jge       EndMove
 
 
-    ; Use calculated offsets to access gift_x_list and gift_y_list
-                           mov       cx, gift_x_2                      ; Get X position of the gift
-                           mov       dx, gift_y_2                      ; Get Y position of the gift
-                           mov       bx, gift_size_2                   ; Load the gift size
-                           push      cx
-                           push      dx
-                           mov       si, 0
-    DrawColumnG_2:         
-                           push      cx
-                           mov       di, 0
-    DrawRowG_2:            
-                           mov       ah, 0Ch
-                           mov       al, gift_color_2
-                           int       10h
+    ; Check if gift is active
+                         cmp       [gift_active+bx], 0             ; Is the gift active?
+                         je        SkipGift
+                         
+    ; Decrement counter
+                         dec       [gift_counter]                  ; Decrement gift's counter
+                         jnz       SkipGift
+                         
+                         push      cx
+                         push      ax
+                         mov       gift_color, 0
+                         mov       bow_color, 0
+                         mov       ribbon_color, 0
 
-                           inc       cx
-                           inc       di
-                           cmp       di, bx
-                           jl        DrawRowG_2
-                           pop       cx
-                           inc       dx
-                           inc       si
-                           cmp       si, bx
-                           jl        DrawColumnG_2
-                           pop       dx
-                           pop       cx
-                           push      cx
-                           push      dx
+                         CALL      DrawGift
+                         pop       ax
+                         pop       cx
 
-    ; Draw horizontal ribbon
-                           mov       si, gift_size_2
-                           shr       si, 1
-                           add       dx, si
-                           mov       di, 0
-    RibbonHorizontal_2:    
-                           mov       ah, 0Ch
-                           mov       al, ribbon_color_2
-                           int       10h
 
-                           inc       cx
-                           inc       di
-                           cmp       di, bx
-                           jl        RibbonHorizontal_2
+    ; Reset counter
+                         mov       ax, gift_speed
+                         mov       [gift_counter], ax
 
-    ; Draw vertical ribbon
-                           pop       dx
-                           pop       cx
-                           push      cx
-                           push      dx
-                           add       cx, si
-                           mov       di, 0
-    RibbonVertical_2:      
-    ; Set pixel for ribbon (Vertical)
+    ; Move gift down     
+                         
+                         mov       ax, gift_y
+                         add       ax, gift_dy
+                         mov       [gift_y], ax                    ; Update Y positionFre
 
-                           mov       ah, 0Ch
-                           mov       al, ribbon_color_2
-                           int       10h
+    continue_move_gift:  
+                         cmp       ax, 590
+                         jl        check_gift_collision
+                         mov        [gift_active+bx], 0
+                         mov       [is_there_gift],0
+                         jmp       SkipGift
+                        
+    check_gift_collision:
+                         mov       ax, gift_y
+                         add       ax, gift_size
+                         cmp       ax, padel_y1
+                         jl        SkipGift
 
-                           inc       dx
-                           inc       di
-                           cmp       di, bx
-                           jl        RibbonVertical_2
+                         mov       ax, gift_y
+                         add       ax, ball_size
+                         cmp       ax, padel_y2
+                         jg        SkipGift
 
-    ; Draw bow (top decoration)
-                           pop       dx
-                           pop       cx
-                           mov       di, 0
-    DrawBow_2:             
-                           mov       ah, 0Ch
-                           mov       al, bow_color_2
-                           int       10h
+                         mov       ax, gift_x
+                         add       ax, gift_size
+                         cmp       ax, padel_x1
+                         jl        SkipGift
+                     
+                         mov       ax, gift_x
+                         add       ax, gift_size
+                         cmp       ax, padel_x2
+                         jg        SkipGift
+                         mov        [gift_active+bx], 0
+                         mov       [is_there_gift],0
+                         cmp       [gift_colors_list+bx],2                  ; Check if gift_color is 2
+                         je        SetColor4                       ; Jump to set gift_ball_color to 4
 
-                           inc       cx
-                           inc       di
-                           cmp       di, gift_size_2
-                           jl        DrawBow_2
-    SkipDrawing_2:         
-                           pop       bx
-                           RET
-DrawGift_2 ENDP
+                         cmp       [gift_colors_list+bx], 5                   ; Check if gift_color is 5
+                         je        SetColor14                      ; Jump to set gift_ball_color to 14
+
+                         cmp       [gift_colors_list+bx], 9                   ; Check if gift_color is 9
+                         je        SetColor5                       ; Jump to set gift_ball_color to 5
+
+                         cmp       [gift_colors_list+bx], 14                  ; Check if gift_color is 14
+                         je        SetColor1                       ; Jump to set gift_ball_color to 1
+
+                         cmp       [gift_colors_list+bx], 15                  ; Check if gift_color is 15
+                         je        SetColor13                      ; Jump to set gift_ball_color to 13
+
+                         jmp       EndSetColor                     ; Skip to end if no condition matches
+
+    SetColor4:           
+                         mov       [gift_ball_color], 4
+                         jmp       EndSetColor                     ; Jump to end
+
+    SetColor14:          
+                         mov       [gift_ball_color], 14
+                         mov       [padel_width],80
+                         jmp       EndSetColor                     ; Jump to end
+
+    SetColor5:           
+                         mov       [gift_ball_color], 5
+                         mov        [padel_color],0
+                         CALL       DrawPadel
+                         mov        [padel_color],4
+                         mov       [padel_width],20
+                         jmp       EndSetColor                     ; Jump to end
+
+    SetColor1:           
+                         mov       [gift_ball_color], 1
+                         jmp       EndSetColor                     ; Jump to end
+
+    SetColor13:          
+                         mov       [gift_ball_color], 13
+                         inc       display_lives
+                         call      DisplayLives
+                         
+
+    EndSetColor:         
+                         mov       gift_timer, 0                   ; Reset gift_timer
+
+
+    SkipGift:            
+                         inc       bx
+                         jmp       LoopMoveGifts
+
+    EndMove:             
+                         pop       bx
+                         ret
+MoveGift ENDP
 
 
 
@@ -2141,10 +1953,18 @@ ClearBrick proc
                            push      dx
                            push      di
                            push      si
-
-                           add       display_score, 1
+                           
+                           cmp       [gift_ball_color],1
+                           jnz        skipdouble_score
+                           add        display_score, 1
+                skipdouble_score:
+                           inc       display_score
                            CALL      DisplayScore
                            CALL      beep
+                           cmp       [gift_ball_color],4
+                            jnz       no_reflect
+                            neg       ball_dy
+                            no_reflect:
                            neg       ball_dy
                            mov       bricks[bx], 0
                            inc       score
@@ -2313,7 +2133,7 @@ ClearBrick_2 proc
                            call      ResetAll_2
 
     same_lvl_2:            
-                           CALL      SpawnGift_2
+                          ; CALL      SpawnGift_2
                            pop       si
                            pop       di
                            pop       dx
@@ -2323,158 +2143,56 @@ ClearBrick_2 proc
 
                            ret
 ClearBrick_2 endp
-
 RandomByte PROC
-                           mov       ah, 00h
-                           int       1Ah
-                           xor       al, dh
-                           ret
+                         mov       ah, 00h
+                         int       1Ah
+                         xor       al, dh
+                         ret
 RandomByte ENDP
 
-RandomByte_2 PROC
-                           mov       ah, 00h
-                           int       1Ah
-                           xor       al, dh
-                           ret
-RandomByte_2 ENDP
-
 SpawnGift PROC
-                           cmp       [is_there_gift], 1
-                           je        SkipActivation
-                           mov       cl, gift_count                    ; Total number of gifts
-                           mov       ch,0
-                           mov       bx, current_gift                  ; Start checking from current_gift
-                           xor       dx, 0                             ; Loop control (wrap-around)
+                         cmp       [is_there_gift], 1
+                         je        SkipActivation
+                         mov       cx, gift_count                  ; Total number of gifts
+                         mov       bx, current_gift                ; Start checking from current_gift
+                        
+                         
 
-    FindSlot:              
-                           cmp       bx, cx                            ; Check if bx >= gift_count
-                           jl        CheckSlot                         ; If within range, check slot
+    ; MaybeActivate:       
+    ; ; Generate a random number to decide activation
+    ;                      push      cx
+    ;                      call      RandomByte
+    ;                      pop       cx
+    ;                      and       al, 1
+    ;                      cmp       al, 0
+    ;                      je        NoSlotAvailable
 
-                           xor       bx, bx                            ; Wrap around to 0
-                           inc       dx                                ; Increment loop counter
-                           cmp       dx, 2                             ; Have we looped twice?
-                           jge       NoSlotAvailable                   ; If yes, exit
+    ActivateGift:        
+                         mov       ax, bx
+                         shl       ax, 1
+                         mov       si, ax
+                         
 
-    CheckSlot:             
-                           cmp       [gift_active+bx], 0               ; Check if the gift is inactive
-                           je        MaybeActivate
-                           inc       bx                                ; Move to the next slot
-                           jmp       FindSlot
-
-    MaybeActivate:         
-    ; Generate a random number to decide activation
-                           push      cx
-                           call      RandomByte
-                           pop       cx
-                           MOV AL, 1;
-                           and       al, 1
-                           cmp       al, 0
-                           je        NoSlotAvailable
-
-    ActivateGift:          
-                           mov       ax, bx
-                           shl       ax, 1
-                           mov       si, ax
-                           
-
-                           mov       [gift_active+bx], 1               ; Activate the gift
-                           mov       ax, ball_x
-                           mov       gift_x, ax
-                           mov       ax, ball_y
-                           mov       gift_y, ax
-                           mov       [is_there_gift],1
+                         mov       [gift_active+bx], 1             ; Activate the gift
+                         mov       ax, ball_x
+                         mov       gift_x, ax
+                         mov       ax, ball_y
+                         mov       gift_y, ax
+                         mov       [is_there_gift],1
 
     ; Increment current_gift
-                           inc       current_gift                      ; Increment current gift
-                           cmp       current_gift, cx                  ; Check if it exceeds gift_count
-                           jl        SkipWrapAround
-                           mov       [current_gift],0
-                           inc       current_gift_counter
-                           cmp       current_gift_counter, 3
-                           jne testfail
-                           mov ah, 0
-                           int 16h
-                           testfail:
+                         inc       current_gift                    ; Increment current gift
+                         cmp       current_gift, cx                ; Check if it exceeds gift_count
+                         jl        SkipWrapAround
+                         mov       [current_gift],0
 
-    SkipWrapAround:        
-                           ret
+    SkipWrapAround:      
+                         ret
 
-    SkipActivation:        
-                           inc       bx                                ; Move to the next slot
-                           jmp       FindSlot
-
-    NoSlotAvailable:       
-                           ret
+    SkipActivation:      
+    NoSlotAvailable:     
+                         ret
 SpawnGift ENDP
-
-SpawnGift_2 PROC
-                           cmp       [is_there_gift_2], 1
-                           je        SkipActivation_2
-                           mov       cl, gift_count_2                  ; Total number of gifts
-                           mov       ch,0
-                           mov       bx, current_gift_2                ; Start checking from current_gift
-                           xor       dx, 0                             ; Loop control (wrap-around)
-
-    FindSlot_2:            
-                           cmp       bx, cx                            ; Check if bx >= gift_count
-                           jl        CheckSlot_2                       ; If within range, check slot
-
-                           xor       bx, bx                            ; Wrap around to 0
-                           inc       dx                                ; Increment loop counter
-                           cmp       dx, 2                             ; Have we looped twice?
-                           jge       NoSlotAvailable_2                 ; If yes, exit
-
-    CheckSlot_2:           
-                           cmp       [gift_active_2+bx], 0             ; Check if the gift is inactive
-                           je        MaybeActivate_2
-                           inc       bx                                ; Move to the next slot
-                           jmp       FindSlot_2
-
-    MaybeActivate_2:       
-    ; Generate a random number to decide activation
-                           push      cx
-                           call      RandomByte_2
-                           pop       cx
-                           and       al, 1
-                           cmp       al, 0
-                           je        NoSlotAvailable_2
-
-    ActivateGift_2:        
-                           mov       ax, bx
-                           shl       ax, 1
-                           mov       si, ax
-
-                           mov       [gift_active_2+bx], 1             ; Activate the gift
-                           mov       ax, ball_x_2
-                           mov       gift_x_2, ax
-                           mov       ax, ball_y_2
-                           mov       gift_y_2, ax
-                           mov       [is_there_gift_2],1
-
-    ; Increment current_gift
-                           inc       current_gift_2                    ; Increment current gift
-                           cmp       current_gift_2 ,cx                ; Check if it exceeds gift_count
-                           jl        SkipWrapAround_2
-                           mov       [current_gift_2],0
-                                                      inc       current_gift_counter_2
-                           cmp       current_gift_counter_2, 3
-                           jne testfail_2
-                           mov ah, 0
-                           int 16h
-                           testfail_2:
-
-    SkipWrapAround_2:      
-                           ret
-
-    SkipActivation_2:      
-                           inc       bx                                ; Move to the next slot
-                           jmp       FindSlot_2
-
-    NoSlotAvailable_2:     
-                           ret
-SpawnGift_2 ENDP
-
-
 
 MAIN PROC
     MOV       AX, @DATA
@@ -2634,18 +2352,20 @@ GAME PROC
     MOV       BX, 103h
     INT       10h
 
-    CALL      DrawLevel1
+    ;CALL      DrawLevel1
+    CALL      DrawLevel2
     CALL      DrawLevel1_2
 
-    lea si, songNotes
-    push si
+    ; lea si, songNotes
+    ; push si
+
 gameLoop:
 
     CMP       inReset, 1
     JE        waitForReset1
     Collision selected_level
-    CALL      DrawPadel
     CALL      MovePadel
+    CALL      DrawPadel
     MOV       ball_color, 0
     CALL      DrawBall
     CALL      MoveBall
@@ -2681,7 +2401,6 @@ skipPlayer1:
     CALL      MoveBall_2
     MOV       BL, gift_ball_color_2
     MOV       ball_color_2, BL
-    CALL      GiftLogic_2
     JMP       skipPlayer2
 
 waitForReset2:
@@ -2715,11 +2434,8 @@ beep proc
                            push      bx
                            push      cx
                            push      dx
-                           cmp       [gift_ball_color],4
-                           jz        no_reflect
 
-
-    no_reflect:            mov       al, 182                           ; Prepare the speaker for the
+                           mov       al, 182                           ; Prepare the speaker for the
                            out       43h, al                           ;  note.
                            mov       ax, 400                           ; Frequency number (in decimal)
     ;  for middle C.
@@ -2753,105 +2469,42 @@ beep endp
 ;description
 
 GiftLogic_1 PROC
-                           mov       cl, gift_count
-                           cmp       current_gift_counter, cl
-                           jl        reset
-                           mov       cl ,0
-                           mov       current_gift_counter, cl
-    reset:                 
-                           
-                           mov       bl,current_gift_counter
-                           mov       bh,0
+                         mov      bx, [current_gift_counter]
+                         mov       cx, gift_count
+                         cmp       bx, cx
+                         jl        reset
+                         xor       bx,bx
+    reset:               
 
-
-                           mov       gift_color, 0
-                           mov       bow_color, 0
-                           mov       ribbon_color, 0
-
-
-                           CALL      DrawGift
-
-                           mov       gift_color, 0
-                           mov       bow_color, 0
-                           mov       ribbon_color, 0
-
-                           
-                           CALL      MoveGift
-
-
-
-                           mov       al,[gift_colors_list+bx]
-                           mov       gift_color, al
-                           mov       al,[gift_ribbon_list+bx]
-                           mov       bow_color, al
-                           mov       ribbon_color, al
-
-
-
-                           CALL      DrawGift  
-
-
-
-                           ;inc       current_gift_counter
-                           cmp       gift_ball_color, 2
-                           je        wait_30
-
-                           inc       [gift_timer]
-                           mov       ax, [gift_timer]
-                           cmp       ax, 10000
-                           jb        wait_30
-                           mov       gift_ball_color, 2
-                           mov       [padel_width],50
-
-                           mov       gift_timer, 0
                         
-    wait_30:  
-    ret
-GiftLogic_1 ENDP
+                         CALL      MoveGift
+                         mov       al,[gift_colors_list+bx]
+                         mov       gift_color, al
+                         mov       al,[gift_ribbon_list+bx]
+                         mov       bow_color, al
+                         mov       ribbon_color, al
 
-GiftLogic_2 PROC
-                           mov       cl, gift_count_2
-                           cmp       current_gift_counter_2, cl
-                           jl        reset_2
-                           mov       cl ,0
-                           mov       current_gift_counter_2,cl
-    reset_2:                 
-                           
-                           mov       bl,current_gift_counter_2
-                           mov       bh,0
-
-                           mov       gift_color_2, 0
-                           mov       bow_color_2, 0
-                           mov       ribbon_color_2, 0
-                           CALL      DrawGift_2
-
-                           CALL      MoveGift_2
-                           mov       al,[gift_colors_list_2+bx]
-                           mov       gift_color_2, al
-                           mov       al,[gift_ribbon_list_2+bx]
-                           mov       bow_color_2, al
-                           mov       ribbon_color_2, al
-                           
-                           CALL      DrawGift_2
-
-
+                         CALL      DrawGift
                        
 
-                           ;inc       current_gift_counter_2
-                           cmp       gift_ball_color_2, 2
-                           je        wait_30_2
+                         inc       bx
+                         mov       [current_gift_counter], bx
+                         cmp       gift_ball_color, 2
+                         je        wait_30
 
-                           inc       [gift_timer_2]
-                           mov       ax, [gift_timer_2]
-                           cmp       ax, 10000
-                           jb        wait_30_2
-                           mov       gift_ball_color_2, 2
-                           mov       [padel_width_2],50
+                         inc       [gift_timer]
+                         mov       ax, [gift_timer]
+                         cmp       ax, 10000
+                         jb        wait_30
+                         mov       gift_ball_color, 2
+                         mov       [padel_width],40
 
-                           mov       gift_timer_2, 0
+                         mov       gift_timer, 0
                         
-    wait_30_2:  
+    wait_30:             
+
+
     ret
-GiftLogic_2 ENDP
+GiftLogic_1 ENDP
 
 END MAIN
