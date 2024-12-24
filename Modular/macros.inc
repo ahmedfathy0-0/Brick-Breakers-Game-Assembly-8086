@@ -43,7 +43,7 @@ Collision_2 macro lvl_2
     coll_end_2: 
 endm
 
-clearscreen_chat macro 
+clearscreen_textMode macro 
             push ax
             push bx
             push cx
@@ -54,8 +54,19 @@ clearscreen_chat macro
             mov dx,184fh
             int 10h
             
+            pop dx
+            pop cx
+            pop bx
+            pop ax
+endm
 
-            ; Update cursor position
+DisplayUsers macro
+            push ax
+            push bx
+            push cx
+            push dx
+           
+           ; Update cursor position
             mov ah, 2
             mov dh, 0
             mov dl, 30
@@ -72,12 +83,11 @@ clearscreen_chat macro
             int 10h  
 
             mov ah, 9
-            lea dx, player2      ;prints player 1 string
+            lea dx, player2      ;prints player 2 string
             int 21h 
-            
+
             pop dx
             pop cx
             pop bx
             pop ax
 endm
-

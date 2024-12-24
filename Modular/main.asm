@@ -496,7 +496,8 @@ SCORE_BOARD PROC
 SCORE_BOARD ENDP
 
 CHAT_WINDOW PROC
-                            clearscreen_chat
+                            clearscreen_textMode
+                            DisplayUsers
  
     ChatLoop:
                              call        chat

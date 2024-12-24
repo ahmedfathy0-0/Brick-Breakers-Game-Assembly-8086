@@ -1,20 +1,3 @@
-clearscreen macro 
-            push ax
-            push bx
-            push cx
-            push dx
-           
-            mov ax,0600h
-            mov bh,07h
-            mov cx,0
-            mov dx,184fh
-            int 10h
-            
-            pop dx
-            pop cx
-            pop bx
-            pop ax
-endm
 
 initiate macro
                                             ; initinalize COM
@@ -68,8 +51,6 @@ Main proc
     mov ax, @data
     mov ds, ax
 
-
-    clearscreen
     initiate
 
 
