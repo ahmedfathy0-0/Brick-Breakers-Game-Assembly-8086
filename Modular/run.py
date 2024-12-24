@@ -11,7 +11,7 @@ cycles = max
 
 output=openglpp
 [autoexec]
-mount C D:\CMP27\8086
+mount C C:\80861
 set PATH=%PATH%;C:
 MOUNT D --path--
 D:

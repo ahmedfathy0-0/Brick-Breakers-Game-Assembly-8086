@@ -8,8 +8,8 @@
 .STACK 100h
 
 .DATA
-    sendv    dw ?
-    recievev dw ?
+    sendv    db ?
+    recievev db ?
 
 .CODE
 
@@ -19,8 +19,8 @@ Send PROC FAR
                       jz   skipS
 
                       mov  dx, 3F8h
-                      mov  ax, sendv
-                      out  dx, ax
+                      mov  al, sendv
+                      out  dx, al
     skipS:
             ret
 Send ENDP 
@@ -34,7 +34,7 @@ Receive PROC FAR
 
                       mov  dx, 3F8h
                       in   ax, dx
-                      mov recievev, ax
+                      mov recievev, al
     skipR:
                       ret
 Receive ENDP

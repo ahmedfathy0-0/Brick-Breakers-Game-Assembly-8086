@@ -150,61 +150,84 @@ DrawPadel_2 PROC FAR
     end_Draw_2:      
                    RET
 DrawPadel_2 ENDP
-MovePadel PROC  FAR
-                   mov  ah, 1
-                   int  16h
-                   jz   noKeyPressed
-                   mov  ah, 0
-                   int  16h
+MovePadel PROC FAR
+    mov ah, 1
+    int 16h
+    jz noKeyPressed          
 
-                   push ax
-                   mov  ax, padel_x
-                   mov  sendv, ax
+    mov ah, 0
+    int 16h                  
 
-                   CALL Send
-                   pop ax
-                   cmp  AL, 'd'
-                   jz   MoveRight
-                   cmp  AL, 'a'
-                   jz   MoveLeft
+    cmp AL, 'd'
+    jz MoveRight             
+    cmp AL, 'a'
+    jz MoveLeft              
 
-                          
-    noKeyPressed:  
-                   RET
-    MoveRight:     
-                   cmp  padel_x2, 399
-                   jge  stop_move
-                   mov  [padel_color],0
-                   call DrawPadel
-                   mov  [padel_color],4
-                   add  padel_x, padel_speed
-                   RET
-                     
-    MoveLeft:      
-                   cmp  padel_x1, 10
-                   jle  stop_move
-                   mov  [padel_color],0
-                   call DrawPadel
-                   mov  [padel_color],4
-                   sub  padel_x, padel_speed
-                   RET
-    stop_move:     
-                   RET
+noKeyPressed:
+    ret
+
+MoveRight:
+    cmp padel_x2, 399         
+    jge stop_move             
+
+    mov [padel_color], 0
+    call DrawPadel
+    mov [padel_color], 4
+
+    add padel_x, padel_speed  
+
+    mov cx, padel_x
+    shr cx, 1
+    mov sendv, cx             
+    call Send                 
+    ret
+
+MoveLeft:
+    cmp padel_x1, 10          
+    jle stop_move             
+
+    mov [padel_color], 0
+    call DrawPadel
+    mov [padel_color], 4
+    sub padel_x, padel_speed  
+
+    mov cx, padel_x
+    shr cx, 1
+    mov sendv, cx             
+    call Send                 
+
+    ret
+
+stop_move:
+    ret
 MovePadel ENDP
 
-
 MovePadel_2 PROC FAR
-                   mov  [padel_color_2],0
-                   call DrawPadel_2
-                   CALL Receive
-                   add recievev,400
-                   mov ax, recievev
-                   mov padel_x_2, ax
-                   mov  [padel_color_2],4
-                   
-                   mov recievev, 0
-                   RET
+    mov recievev, 0
+    call Receive             
+    mov bx, recievev  
+    shl bx, 1                
+    add bx, 400              
+
+    cmp bx, padel_x_2
+    je skipboi     
+
+    cmp recievev, 10
+    jb skipboi          
+
+    mov [padel_color_2], 0
+    call DrawPadel_2          
+    mov [padel_color_2], 4     
+    mov padel_x_2, bx
+    call DrawPadel_2          
+
+
+
+skipboi:
+    mov recievev, 0
+    ret
 MovePadel_2 ENDP
+
 
 
 DrawBall PROC FAR
