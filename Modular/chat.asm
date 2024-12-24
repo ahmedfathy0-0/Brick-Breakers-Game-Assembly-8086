@@ -1,16 +1,11 @@
 PUBLIC terminateChat
 PUBLIC chat
-PUBLIC player1
-PUBLIC player2
 
 .MODEL small
 .STACK 100h
 .data
 char db ?
 value db ?
-
-player1   db 'You $'
-player2   db 'Player 2$'
 
 terminateChat db 0
 column_sender db 0  ;saves last column written in sender  [0-79]
@@ -117,7 +112,6 @@ nextColumn:
     ret
 movcurserSender endp
 
-
 moveCursorReceiver proc far
     push ax
     push bx
@@ -159,7 +153,71 @@ nextColumn_rec:
     ret
 moveCursorReceiver endp
 
+moveCursorBackSender proc far
+            push ax
+            push bx
+            push cx
+            push dx
+            
+            cmp column_sender, 0
+            jz previousRow
+            dec column_sender
+            jmp SkipDelete ;just to evade prevrow
 
+previousRow:
+            cmp row_sender, 1
+            jle SkipDelete
+            dec row_sender
+            mov column_sender, 79            
+SkipDelete:            
+            pop dx
+            pop cx
+            pop bx
+            pop ax
+            ret
+moveCursorBackSender endp
+
+moveCursorBackReceiver proc far
+            push ax
+            push bx
+            push cx
+            push dx
+            
+            cmp column_receiver, 0
+            jz previousRowReceiver
+            dec column_receiver
+            jmp SkipDeleteReceiver ;just to evade prevrow
+
+previousRowReceiver:
+            cmp row_receiver, 13
+            jz SkipDeleteReceiver
+            dec row_receiver
+            mov column_receiver, 79
+
+SkipDeleteReceiver:
+            pop dx
+            pop cx
+            pop bx
+            pop ax
+            ret
+moveCursorBackReceiver endp
+
+SetCursorPosition proc far
+            push ax
+            push bx
+            push cx
+            push dx
+
+            mov ah, 02h
+            mov bh, 0
+            int 10h
+
+            pop dx
+            pop cx
+            pop bx
+            pop ax
+            ret
+SetCursorPosition endp
 chat proc far
 
             push ax
@@ -182,7 +240,23 @@ chat proc far
             cmp al,0Dh                  ;to see if it is enter
             jz EnterChar
 
+            cmp al,08h
+            jnz NotBackSpace   ;if zero then delete and move cursor back 
+            
+            mov ah, 9          ; Write character function
+            mov al, ' '        ; Space character to overwrite the previous character
+            mov bh, 0          ; Page number
+            mov cx, 1          ; number of times to write the character
+            int 10h
+            
+            call moveCursorBackSender     ;adjust column and row values for sender
+            mov dl, column_sender         ;values are put in dh and dl to be ready for the interrupt
+            mov dh, row_sender
+            call SetCursorPosition        ;sets cursor according to the values in dh and dl
+            jmp SkipEnter
+NotBackSpace:
             call movcurserSender
+SkipMovingCursor:
             ;print char to be sent
             mov ah,9
             mov bh,0 
@@ -195,6 +269,12 @@ EnterChar:
             jz SkipEnter
             inc row_sender
             mov column_sender, 0  
+            
+            ;TODO make cursor move light up for enter
+            ; mov dl, column_sender         ;values are put in dh and dl to be ready for the interrupt in setcursorposition
+            ; mov dh, row_sender
+            ; call SetCursorPosition        ;sets cursor according to the values in dh and dl
+
 
 SkipEnter:                      
 

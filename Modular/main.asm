@@ -92,9 +92,8 @@
 
     EXTRN terminateChat :BYTE
     EXTRN chat :FAR
-    EXTRN player1 :BYTE
-    EXTRN player2 :BYTE
-
+    ; EXTRN player1 :BYTE
+    ; EXTRN player2 :BYTE
  
     PUBLIC  ResetAll,ResetAll_2,beep
 
@@ -113,6 +112,8 @@
     mode_label       DB  '=> $'
     waiting_str      DB  'Waiting for Players$'
     dots_str         DB  ".$", "..", "...", "....", 0
+    player1          DB  'You $'
+    player2          DB  'Player 2$'
 
     padel_speed      equ 7
     padel_speed_2    equ 7
@@ -501,8 +502,8 @@ CHAT_WINDOW PROC
                            int        10h            ; Call BIOS interrupt
                           
                            clearscreen_textMode
-                           DisplayUsers 
- 
+                           DisplayUsers player1, player2
+       
     ChatLoop:
                            call        chat
                            cmp         terminateChat,1
@@ -510,7 +511,7 @@ CHAT_WINDOW PROC
 
                            mov         terminateChat, 0  ;to reset chat
                           
-                           ;return back to video mode
+                        ;    return back to video mode
                            mov         ah, 0   
                            mov         al, 4h
                            int         10h

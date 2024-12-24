@@ -60,7 +60,7 @@ clearscreen_textMode macro
             pop ax
 endm
 
-DisplayUsers macro
+DisplayUsers macro player1, player2
             push ax
             push bx
             push cx
@@ -68,7 +68,7 @@ DisplayUsers macro
            
            ; Update cursor position
             mov ah, 2
-            mov dh, 0
+            mov dh, 5
             mov dl, 30
             int 10h 
 
