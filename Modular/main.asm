@@ -94,8 +94,8 @@
 
     EXTRN terminateChat :BYTE
     EXTRN chat :FAR
-    EXTRN player1 :BYTE
-    EXTRN player2 :BYTE
+    ; EXTRN player1 :BYTE
+    ; EXTRN player2 :BYTE
 
  
     PUBLIC  ResetAll,ResetAll_2,beep
@@ -115,6 +115,8 @@
     mode_label       DB  '=> $'
     waiting_str      DB  'Waiting for Players$'
     dots_str         DB  ".$", "..", "...", "....", 0
+    player1          DB  'You $'
+    player2          DB  'Player 2$'
 
     padel_speed      equ 7
     padel_speed_2    equ 7
@@ -498,20 +500,22 @@ SCORE_BOARD PROC
 SCORE_BOARD ENDP
 
 CHAT_WINDOW PROC
-                           mov         ah, 0                           ; BIOS video service: Set video mode
-                           mov         al, 3                           ; Video mode 3: 80x25 text mode
-                           int         10h                             ; Call BIOS interrupt
+                           mov        ah, 0          ; BIOS video service: Set video mode
+                           mov        al, 3          ; Video mode 3: 80x25 text mode
+                           int        10h            ; Call BIOS interrupt
                           
-
-    ChatLoop:              
+                           clearscreen_textMode
+                           DisplayUsers player1, player2
+       
+    ChatLoop:
                            call        chat
                            cmp         terminateChat,1
-                           jnz         ChatLoop
+                           jnz         ChatLoop 
 
-                           mov         terminateChat, 0                ;to reset chat
+                           mov         terminateChat, 0  ;to reset chat
                           
-    ;return back to video mode
-                           mov         ah, 0
+                        ;    return back to video mode
+                           mov         ah, 0   
                            mov         al, 4h
                            int         10h
                            ret
