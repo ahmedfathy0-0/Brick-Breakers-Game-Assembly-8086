@@ -42,3 +42,42 @@ Collision_2 macro lvl_2
                 call  Collision3_2
     coll_end_2: 
 endm
+
+clearscreen_chat macro 
+            push ax
+            push bx
+            push cx
+            push dx
+           
+            mov ax,0600h
+            mov cx,0
+            mov dx,184fh
+            int 10h
+            
+
+            ; Update cursor position
+            mov ah, 2
+            mov dh, 0
+            mov dl, 30
+            int 10h  
+
+            mov ah, 9
+            lea dx, player1      ;prints player 1 string
+            int 21h  
+
+            ; Update cursor position
+            mov ah, 2
+            mov dh, 12
+            mov dl, 30
+            int 10h  
+
+            mov ah, 9
+            lea dx, player2      ;prints player 1 string
+            int 21h 
+            
+            pop dx
+            pop cx
+            pop bx
+            pop ax
+endm
+
