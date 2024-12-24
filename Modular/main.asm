@@ -530,7 +530,7 @@ GAME PROC
                            CALL        DrawPadel
                            MOV         ball_color, 0
                            CALL        DrawBall
-                           CALL        MoveBall
+                           ;CALL        MoveBall
                            MOV         BL, gift_ball_color
                            MOV         ball_color, BL
                            CALL        DrawBall
@@ -560,7 +560,7 @@ GAME PROC
                            CALL        MovePadel_2
                            MOV         ball_color_2, 0
                            CALL        DrawBall_2
-                           CALL        MoveBall_2
+                           ;CALL        MoveBall_2
     ;MOV         BL, gift_ball_color_2
                            MOV         ball_color_2, 2
                            JMP         skipPlayer2

@@ -1,5 +1,9 @@
     EXTRN  ResetAll:FAR
     EXTRN  ResetAll_2:FAR
+    EXTRN  Send:FAR
+    EXTRN  Receive:FAR
+    EXTRN  sendv:WORD
+    EXTRN  recievev:WORD
     
     PUBLIC DrawPadel, DrawPadel_2, MovePadel, MovePadel_2
     PUBLIC DrawBall, DrawBall_2, MoveBall, MoveBall_2
@@ -152,20 +156,18 @@ MovePadel PROC  FAR
                    jz   noKeyPressed
                    mov  ah, 0
                    int  16h
-                   mov  char,al
 
-    wait_for_uart: 
-                   in   al, dx
-                   and  al, 00100000b
-                   jz   noKeyPressed
+                   push ax
+                   mov  ax, padel_x
+                   mov  sendv, ax
 
-                   mov  dx, 3F8h
-                   mov  al, char
-                   out  dx, al
+                   CALL Send
+                   pop ax
                    cmp  AL, 'd'
                    jz   MoveRight
                    cmp  AL, 'a'
                    jz   MoveLeft
+
                           
     noKeyPressed:  
                    RET
@@ -191,39 +193,16 @@ MovePadel PROC  FAR
 MovePadel ENDP
 
 
-MovePadel_2 PROC  FAR
-                   mov  dx, 3FDh                     
-                   in   al, dx
-                   and  al, 1
-                   jz   noKeyPressed_2               
-
-                   mov  dx, 3F8h
-                   in   al, dx
-                   cmp  AL, 'd'
-                   jz   MoveRight_2
-                   cmp  AL, 'a'
-                   jz   MoveLeft_2
-                          
-    noKeyPressed_2:  
-                   RET
-    MoveRight_2:     
-                   cmp  padel_x2_2, 799
-                   jge  stop_move_2
+MovePadel_2 PROC FAR
                    mov  [padel_color_2],0
                    call DrawPadel_2
+                   CALL Receive
+                   add recievev,400
+                   mov ax, recievev
+                   mov padel_x_2, ax
                    mov  [padel_color_2],4
-                   add  padel_x_2, padel_speed_2
-                   RET
-                     
-    MoveLeft_2:      
-                   cmp  padel_x1_2, 410
-                   jle  stop_move_2
-                   mov  [padel_color_2],0
-                   call DrawPadel_2
-                   mov  [padel_color_2],4
-                   sub  padel_x_2, padel_speed_2
-                   RET
-    stop_move_2:     
+                   
+                   mov recievev, 0
                    RET
 MovePadel_2 ENDP
 
