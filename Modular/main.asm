@@ -549,7 +549,7 @@ GAME PROC
 
                            CALL        DrawLevel1
                            CALL        DrawLevel1_2
-                            mov score, 322
+                            mov score, 0
     ; CALL      DrawLevel2
     ; lea si, songNotes
     ; push si
@@ -715,14 +715,29 @@ GameEnd PROC FAR
 
 display_lose_or_win:
     cmp score, score3
-    jne display_lose
-
+    jl display_lose
+    mov sendv, 00011111b
+    CALL Send
+    mov ax,0600h
+    mov cx,0
+    mov dx,184FH
+    int 10h ; clear screen
+    mov ah, 2
+    mov dx, 0A0Fh
+    int 10h ;set cursor
     mov ah, 9
     mov dx, offset you_won_str
     int 21h
     jmp continueGameOver
 
 display_lose:
+    mov ax,0600h
+    mov cx,0
+    mov dx,184FH
+    int 10h ; clear screen
+    mov ah, 2
+    mov dx, 0A0Fh
+    int 10h ;set cursor
     mov ah, 9
     mov dx, offset you_lost_str
     int 21h

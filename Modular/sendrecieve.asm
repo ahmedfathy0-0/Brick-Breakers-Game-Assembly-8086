@@ -3,6 +3,7 @@
     PUBLIC recievev
     EXTRN MovePadel_2:FAR
     EXTRN sendDelay:FAR
+    EXTRN GameEnd:FAR
     
     EXTRN ball_x_2:WORD
     EXTRN ball_y_2:WORD
@@ -125,6 +126,10 @@ Receive PROC FAR
                  shr  al,cl
                  cmp al,1
                  jz  changeBallColor
+                 mov al,00011111b
+                 cmp al,recievev
+                 jne skipR
+                 CALL GameEnd
                  jmp  skipR
     changeBallColor:
                  mov al,recievev

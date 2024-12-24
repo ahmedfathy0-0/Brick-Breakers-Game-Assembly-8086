@@ -1004,6 +1004,10 @@ ClearBrick_2 proc
                            add       display_score_2, 1
                            CALL      DisplayScore_2
                            CALL      beep
+                           cmp       [gift_ball_color_2],4
+                            jnz       no_reflect_2
+                            neg       ball_dy_2
+                            no_reflect_2:
                            neg       ball_dy_2
                            mov       bricks_2[bx], 0
                            add       score_2, 1
