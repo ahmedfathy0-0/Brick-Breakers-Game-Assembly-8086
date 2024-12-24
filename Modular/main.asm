@@ -90,6 +90,12 @@
     EXTRN selected_level :BYTE
     EXTRN selected_level_2 :BYTE
 
+    EXTRN terminateChat :BYTE
+    EXTRN chat :FAR
+    EXTRN player1 :BYTE
+    EXTRN player2 :BYTE
+
+ 
     PUBLIC  ResetAll,ResetAll_2,beep
 
 
@@ -459,7 +465,7 @@ MAIN PROC
                            jmp         main_menu
 
     callChat:              
-                           call        CHAT
+                           call        CHAT_WINDOW
                            jmp         main_menu
 
     callBoard:             
@@ -489,24 +495,17 @@ SCORE_BOARD PROC
                            ret
 SCORE_BOARD ENDP
 
-CHAT PROC
-                           mov         ax,0600h
-                           mov         cx,0
-                           mov         dx,184FH
-                           int         10h
-                           mov         ah, 2
-                           mov         dx, 0
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset chat_demo_str
-                           int         21h
-    continueChat:          
-                           mov         ah,0
-                           int         16h
-                           cmp         al, 1Bh                         ; Check if the pressed key is ESC (ASCII 1Bh)
-                           jne         continueChat
+CHAT_WINDOW PROC
+                            clearscreen_chat
+ 
+    ChatLoop:
+                             call        chat
+                             cmp         terminateChat,1
+                             jnz         ChatLoop 
+
+                             mov         terminateChat, 0  ;to reset chat
                            ret
-CHAT ENDP
+CHAT_WINDOW ENDP
 
 GAME PROC
 
