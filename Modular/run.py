@@ -6,12 +6,12 @@ from time import sleep
 
 filedata = r"""
 [cpu]
-cycles = max
+cycles = auto
 [sdl]
 
 output=openglpp
 [autoexec]
-mount C C:\80861
+mount C D:\CMP27\8086
 set PATH=%PATH%;C:
 MOUNT D --path--
 D:
@@ -74,5 +74,5 @@ prog1 = ["C:\DOSBox-X\dosbox-x.exe", "-conf", "dosbox-x-generated1.conf"]
 prog2 = ["C:\DOSBox-X\dosbox-x.exe", "-conf", "dosbox-x-generated2.conf"]
 
 subprocess.Popen(prog1)
-sleep(2)
+sleep(5)
 subprocess.Popen(prog2)

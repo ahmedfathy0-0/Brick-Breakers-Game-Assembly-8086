@@ -27,11 +27,13 @@
     EXTRN DisplayScore_2:FAR
     EXTRN DisplayLives:FAR
     EXTRN DisplayLives_2:FAR
-
+    EXTRN Receive:FAR
+    EXTRN Send:FAR
     
 
 
-
+    EXTRN sendv:WORD
+    EXTRN recievev:WORD
     EXTRN padel_x:WORD
     EXTRN padel_x1:WORD
     EXTRN padel_x2:WORD
@@ -90,6 +92,12 @@
     EXTRN selected_level :BYTE
     EXTRN selected_level_2 :BYTE
 
+    EXTRN terminateChat :BYTE
+    EXTRN chat :FAR
+    EXTRN player1 :BYTE
+    EXTRN player2 :BYTE
+
+ 
     PUBLIC  ResetAll,ResetAll_2,beep
 
 
@@ -339,11 +347,11 @@ MAIN PROC
     ; initinalize COM
     ;Set Divisor Latch Access Bit
                            mov         dx,3fbh                         ; Line Control Register
-                           mov         al,10000000b                    ;Set Divisor Latch Access Bit
+                           mov         al,80h                          ;Set Divisor Latch Access Bit
                            out         dx,al                           ;Out it
     ;Set LSB byte of the Baud Rate Divisor Latch register.
                            mov         dx,3f8h
-                           mov         al,0ch
+                           mov         al,30h
                            out         dx,al
 
     ;Set MSB byte of the Baud Rate Divisor Latch register.
@@ -459,7 +467,7 @@ MAIN PROC
                            jmp         main_menu
 
     callChat:              
-                           call        CHAT
+                           call        CHAT_WINDOW
                            jmp         main_menu
 
     callBoard:             
@@ -489,24 +497,25 @@ SCORE_BOARD PROC
                            ret
 SCORE_BOARD ENDP
 
-CHAT PROC
-                           mov         ax,0600h
-                           mov         cx,0
-                           mov         dx,184FH
+CHAT_WINDOW PROC
+                           mov         ah, 0                           ; BIOS video service: Set video mode
+                           mov         al, 3                           ; Video mode 3: 80x25 text mode
+                           int         10h                             ; Call BIOS interrupt
+                          
+
+    ChatLoop:              
+                           call        chat
+                           cmp         terminateChat,1
+                           jnz         ChatLoop
+
+                           mov         terminateChat, 0                ;to reset chat
+                          
+    ;return back to video mode
+                           mov         ah, 0
+                           mov         al, 4h
                            int         10h
-                           mov         ah, 2
-                           mov         dx, 0
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset chat_demo_str
-                           int         21h
-    continueChat:          
-                           mov         ah,0
-                           int         16h
-                           cmp         al, 1Bh                         ; Check if the pressed key is ESC (ASCII 1Bh)
-                           jne         continueChat
                            ret
-CHAT ENDP
+CHAT_WINDOW ENDP
 
 GAME PROC
 
@@ -526,14 +535,47 @@ GAME PROC
                            CMP         inReset, 1
                            JE          waitForReset1
                            Collision   selected_level
+                           CALL        Receive
                            CALL        MovePadel
                            CALL        DrawPadel
                            MOV         ball_color, 0
                            CALL        DrawBall
-                           ;CALL        MoveBall
+                           CALL        MoveBall
+                           
+                           CALL        sendDelay
+                           
+                           mov         ball_color_2, 0
+                           call        DrawBall_2
+                           Call        Receive
+
+                           mov         bx, ball_x
+                           mov         cl,3
+                           shr         bx , cl
+                           or          bx , 01000000b
+                           mov         sendv, bx
+                           CALL        Send
+                           
+                           CALL        sendDelay
+
+                           mov         ball_color_2, 0
+                           call        DrawBall_2
+                           Call        Receive
+
+                           mov         bx, ball_y
+                           sub         bx,200
+                           mov         cl,3
+                           shr         bx , cl
+                           or          bx , 11000000b
+                           mov         sendv, bx
+                           CALL        Send
+ 
+ 
                            MOV         BL, gift_ball_color
                            MOV         ball_color, BL
                            CALL        DrawBall
+                           
+                           
+
                            CALL        GiftLogic_1
                            JMP         skipPlayer1
 
@@ -560,7 +602,7 @@ GAME PROC
                            CALL        MovePadel_2
                            MOV         ball_color_2, 0
                            CALL        DrawBall_2
-                           ;CALL        MoveBall_2
+                           CALL        MoveBall_2
     ;MOV         BL, gift_ball_color_2
                            MOV         ball_color_2, 2
                            JMP         skipPlayer2
@@ -656,6 +698,12 @@ delay proc
                            mov         seconds, dh
                            ret
 delay endp
+sendDelay PROC
+                           mov         bx,0FFFFh
+    sloop:                 
+                           loop        sloop
+                           ret
+sendDelay ENDP
 
 beep proc FAR
                            push        ax
