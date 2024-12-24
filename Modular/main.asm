@@ -496,15 +496,24 @@ SCORE_BOARD PROC
 SCORE_BOARD ENDP
 
 CHAT_WINDOW PROC
-                            clearscreen_textMode
-                            DisplayUsers
+                           mov        ah, 0          ; BIOS video service: Set video mode
+                           mov        al, 3          ; Video mode 3: 80x25 text mode
+                           int        10h            ; Call BIOS interrupt
+                          
+                           clearscreen_textMode
+                           DisplayUsers 
  
     ChatLoop:
-                             call        chat
-                             cmp         terminateChat,1
-                             jnz         ChatLoop 
+                           call        chat
+                           cmp         terminateChat,1
+                           jnz         ChatLoop 
 
-                             mov         terminateChat, 0  ;to reset chat
+                           mov         terminateChat, 0  ;to reset chat
+                          
+                           ;return back to video mode
+                           mov         ah, 0   
+                           mov         al, 4h
+                           int         10h
                            ret
 CHAT_WINDOW ENDP
 

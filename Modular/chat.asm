@@ -34,7 +34,7 @@ PUBLIC player2
 char db ?
 value db ?
 
-player1   db ' You $'
+player1   db 'You $'
 player2   db 'Player 2$'
 
 terminateChat db 0

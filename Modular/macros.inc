@@ -70,7 +70,7 @@ DisplayUsers macro
             mov ah, 2
             mov dh, 0
             mov dl, 30
-            int 10h  
+            int 10h 
 
             mov ah, 9
             lea dx, player1      ;prints player 1 string
