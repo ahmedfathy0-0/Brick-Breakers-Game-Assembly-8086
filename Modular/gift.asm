@@ -12,7 +12,8 @@
     PUBLIC gift_counter          
     PUBLIC gift_colors_list      
     PUBLIC gift_ribbon_list      
-    PUBLIC gift_ball_color       
+    PUBLIC gift_ball_color      
+    PUBLIC gift_ball_color_2 
     PUBLIC gift_timer            
     PUBLIC current_gift          
     PUBLIC is_there_gift            
@@ -59,8 +60,9 @@
     gift_colors_list      db  2,5,9,14,15
     gift_ribbon_list      db  4,11,2,4,5
     gift_ball_color       db  2
+    gift_ball_color_2     db  2
     gift_timer            dw  0
-    current_gift          dw  0
+    current_gift          dw  3
     is_there_gift         db  0   
     current_gift_counter  dw  0
     

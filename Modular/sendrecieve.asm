@@ -9,6 +9,7 @@
     EXTRN DrawBall_2:FAR
     EXTRN MoveBall_2:FAR
     EXTRN ball_color_2:BYTE
+    EXTRN gift_ball_color_2:BYTE
     
  
 
@@ -64,6 +65,8 @@ Receive PROC FAR
                  shr  al, cl
                 ; Mask the last two bits
                 and  al, 00000011b
+                cmp  al, 0
+                jz   otherRecives
                 cmp  al, 2
                 jz   receivePadel
                 cmp  al, 1
@@ -114,6 +117,19 @@ Receive PROC FAR
                  mov  ball_y_2, bx
 
                  ;CALL MoveBall_2
+                 jmp  skipR
+    otherRecives:
+                 mov al,recievev
+                 and al,00100000b
+                 mov  cl,5
+                 shr  al,cl
+                 cmp al,1
+                 jz  changeBallColor
+                 jmp  skipR
+    changeBallColor:
+                 mov al,recievev
+                 and al,00001111b
+                 mov gift_ball_color_2,al
                  jmp  skipR
 
 

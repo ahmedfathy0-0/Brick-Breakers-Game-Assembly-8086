@@ -84,6 +84,8 @@
     EXTRN current_gift :WORD        
     EXTRN is_there_gift :BYTE       
     EXTRN current_gift_counter :WORD
+    EXTRN gift_ball_color_2:BYTE
+
 
     EXTRN display_lives :BYTE
     EXTRN display_lives_2 :BYTE
@@ -200,44 +202,44 @@
     ;                          RET
     ; ClearScreen ENDP
 ClearScreen PROC FAR
-                           mov         al, 0
-                           mov         dx, 570
+                           mov                  al, 0
+                           mov                  dx, 570
     Clear_outer:           
-                           inc         dx
-                           cmp         dx, 600
-                           jz          end_Clear
+                           inc                  dx
+                           cmp                  dx, 600
+                           jz                   end_Clear
 
-                           mov         cx, 0
+                           mov                  cx, 0
     Clear_inner:           
-                           inc         cx
-                           cmp         cx, 400
-                           jz          Clear_outer
+                           inc                  cx
+                           cmp                  cx, 400
+                           jz                   Clear_outer
 
-                           mov         ah, 0ch
-                           int         10h
-                           jmp         Clear_inner
+                           mov                  ah, 0ch
+                           int                  10h
+                           jmp                  Clear_inner
 
     end_Clear:             
                            RET
 ClearScreen ENDP
 
 ClearScreen_2 PROC FAR
-                           mov         al, 0
-                           mov         dx, 550
+                           mov                  al, 0
+                           mov                  dx, 550
     Clear_outer_2:         
-                           inc         dx
-                           cmp         dx, 600
-                           jz          end_Clear_2
+                           inc                  dx
+                           cmp                  dx, 600
+                           jz                   end_Clear_2
 
-                           mov         cx, 400
+                           mov                  cx, 400
     Clear_inner_2:         
-                           inc         cx
-                           cmp         cx, 800
-                           jz          Clear_outer_2
+                           inc                  cx
+                           cmp                  cx, 800
+                           jz                   Clear_outer_2
 
-                           mov         ah, 0ch
-                           int         10h
-                           jmp         Clear_inner_2
+                           mov                  ah, 0ch
+                           int                  10h
+                           jmp                  Clear_inner_2
 
     end_Clear_2:           
                            RET
@@ -245,290 +247,290 @@ ClearScreen_2 ENDP
 
 ResetAll PROC FAR
                            
-                           mov         ball_x, 199
-                           mov         ball_y, 560
-                           mov         ball_dx, ball_og_speed
-                           mov         ball_dy, ball_og_speed
-                           mov         padel_x1, 174
-                           mov         padel_x2, 224
-                           mov         padel_y1, 581
-                           mov         padel_y2, 590
-                           mov         ball_dy, 2
-                           mov         ball_dx, 0
+                           mov                  ball_x, 199
+                           mov                  ball_y, 560
+                           mov                  ball_dx, ball_og_speed
+                           mov                  ball_dy, ball_og_speed
+                           mov                  padel_x1, 174
+                           mov                  padel_x2, 224
+                           mov                  padel_y1, 581
+                           mov                  padel_y2, 590
+                           mov                  ball_dy, 2
+                           mov                  ball_dx, 0
 
-                           mov         gift_color, 0
-                           mov         bow_color, 0
-                           mov         ribbon_color, 0
+                           mov                  gift_color, 0
+                           mov                  bow_color, 0
+                           mov                  ribbon_color, 0
                            
-                           push        bx
-                           mov         bx, [current_gift_counter]
-                           CALL        DrawGift
-                           pop         bx
+                           push                 bx
+                           mov                  bx, [current_gift_counter]
+                           CALL                 DrawGift
+                           pop                  bx
 
-                           mov         [gift_ball_color],2
-                           mov         [padel_width],40
-                           mov         [padel_x] ,199
-                           mov         [gift_timer],0
-                           dec         display_lives
-                           cmp         display_lives, 0
+                           mov                  [gift_ball_color],2
+                           mov                  [padel_width],40
+                           mov                  [padel_x] ,199
+                           mov                  [gift_timer],0
+                           dec                  display_lives
+                           cmp                  display_lives, 0
     ;    jle        GAMEOVERdd
 
                            
 
-                           CALL        ClearScreen
-                           cmp         selected_level, 1
-                           jnz         cont1
-                           CALL        DrawLevel1
-                           jmp         cont
+                           CALL                 ClearScreen
+                           cmp                  selected_level, 1
+                           jnz                  cont1
+                           CALL                 DrawLevel1
+                           jmp                  cont
     cont1:                 
-                           cmp         selected_level, 2
-                           jnz         cont2
-                           CALL        DrawLevel2
-                           jmp         cont
+                           cmp                  selected_level, 2
+                           jnz                  cont2
+                           CALL                 DrawLevel2
+                           jmp                  cont
     cont2:                 
-                           cmp         selected_level, 3
-                           CALL        DrawLevel3
+                           cmp                  selected_level, 3
+                           CALL                 DrawLevel3
     cont:                  
-                           CALL        DrawPadel
-                           mov         ball_color, 2
-                           CALL        DrawBall
-                           mov         bx,0
+                           CALL                 DrawPadel
+                           mov                  ball_color, 2
+                           CALL                 DrawBall
+                           mov                  bx,0
     ResetAllGifts:         
-                           mov         byte ptr [gift_active+bx], 0
-                           mov         gift_x, 0
-                           mov         gift_y, 0
-                           inc         bl
-                           cmp         bx,[gift_count]
-                           jne         ResetAllGifts
-                           CALL        DrawPadel
+                           mov                  byte ptr [gift_active+bx], 0
+                           mov                  gift_x, 0
+                           mov                  gift_y, 0
+                           inc                  bl
+                           cmp                  bx,[gift_count]
+                           jne                  ResetAllGifts
+                           CALL                 DrawPadel
                            
-                           mov         inReset, 1
+                           mov                  inReset, 1
     GAMEOVER:              
                            RET
 ResetAll ENDP
 
 ResetAll_2 PROC FAR
-                           mov         ball_x_2, 599
-                           mov         ball_y_2, 560
-                           mov         ball_dx_2, ball_og_speed_2
-                           mov         ball_dy_2, ball_og_speed_2
-                           mov         padel_x1_2, 574
-                           mov         padel_x2_2, 624
-                           mov         padel_y1_2, 581
-                           mov         padel_y2_2, 590
-                           mov         ball_dy_2, 2
-                           mov         ball_dx_2, 0
-                           dec         display_lives_2
+                           mov                  ball_x_2, 599
+                           mov                  ball_y_2, 560
+                           mov                  ball_dx_2, ball_og_speed_2
+                           mov                  ball_dy_2, ball_og_speed_2
+                           mov                  padel_x1_2, 574
+                           mov                  padel_x2_2, 624
+                           mov                  padel_y1_2, 581
+                           mov                  padel_y2_2, 590
+                           mov                  ball_dy_2, 2
+                           mov                  ball_dx_2, 0
+                           dec                  display_lives_2
 
-                           CALL        ClearScreen_2
-                           cmp         selected_level_2, 1
-                           jnz         cont1_2
-                           CALL        DrawLevel1_2
-                           jmp         cont_2
+                           CALL                 ClearScreen_2
+                           cmp                  selected_level_2, 1
+                           jnz                  cont1_2
+                           CALL                 DrawLevel1_2
+                           jmp                  cont_2
     cont1_2:               
-                           cmp         selected_level_2, 2
-                           jnz         cont2_2
-                           CALL        DrawLevel2_2
-                           jmp         cont_2
+                           cmp                  selected_level_2, 2
+                           jnz                  cont2_2
+                           CALL                 DrawLevel2_2
+                           jmp                  cont_2
     cont2_2:               
-                           cmp         selected_level_2, 3
-                           CALL        DrawLevel3_2
+                           cmp                  selected_level_2, 3
+                           CALL                 DrawLevel3_2
     cont_2:                
-                           CALL        DrawPadel_2
-                           mov         ball_color_2, 2
-                           CALL        DrawBall_2
-                           CALL        DrawPadel_2
-                           mov         inReset_2, 1
+                           CALL                 DrawPadel_2
+                           mov                  ball_color_2, 2
+                           CALL                 DrawBall_2
+                           CALL                 DrawPadel_2
+                           mov                  inReset_2, 1
                            RET
 ResetAll_2 ENDP
 
 
 MAIN PROC
-                           MOV         AX, @DATA
-                           MOV         DS, AX
+                           MOV                  AX, @DATA
+                           MOV                  DS, AX
     ; initinalize COM
     ;Set Divisor Latch Access Bit
-                           mov         dx,3fbh                         ; Line Control Register
-                           mov         al,80h                          ;Set Divisor Latch Access Bit
-                           out         dx,al                           ;Out it
+                           mov                  dx,3fbh                         ; Line Control Register
+                           mov                  al,80h                          ;Set Divisor Latch Access Bit
+                           out                  dx,al                           ;Out it
     ;Set LSB byte of the Baud Rate Divisor Latch register.
-                           mov         dx,3f8h
-                           mov         al,30h
-                           out         dx,al
+                           mov                  dx,3f8h
+                           mov                  al,30h
+                           out                  dx,al
 
     ;Set MSB byte of the Baud Rate Divisor Latch register.
-                           mov         dx,3f9h
-                           mov         al,00h
-                           out         dx,al
+                           mov                  dx,3f9h
+                           mov                  al,00h
+                           out                  dx,al
 
     ;Set port configuration
-                           mov         dx,3fbh
-                           mov         al,00011011b
-                           out         dx,al
+                           mov                  dx,3fbh
+                           mov                  al,00011011b
+                           out                  dx,al
 
 
 
-                           mov         ah, 0
-                           mov         al, 4h
-                           int         10h
+                           mov                  ah, 0
+                           mov                  al, 4h
+                           int                  10h
     main_menu:             
-                           mov         ax, 0600h
-                           mov         bh, 0
-                           mov         cx, 0
-                           mov         dx, 184Fh
-                           int         10h
-                           cmp         appMode, 1
-                           jne         skip_start_game_label
-                           mov         ah,2
-                           mov         dx,0605h
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset mode_label
-                           int         21h
+                           mov                  ax, 0600h
+                           mov                  bh, 0
+                           mov                  cx, 0
+                           mov                  dx, 184Fh
+                           int                  10h
+                           cmp                  appMode, 1
+                           jne                  skip_start_game_label
+                           mov                  ah,2
+                           mov                  dx,0605h
+                           int                  10h
+                           mov                  ah, 9
+                           mov                  dx, offset mode_label
+                           int                  21h
     skip_start_game_label: 
-                           mov         ah,2
-                           mov         dx,0608h
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset start_game_str
-                           int         21h
+                           mov                  ah,2
+                           mov                  dx,0608h
+                           int                  10h
+                           mov                  ah, 9
+                           mov                  dx, offset start_game_str
+                           int                  21h
 
-                           cmp         appMode, 2
-                           jne         skip_chat_label
-                           mov         ah,2
-                           mov         dx,0A05h
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset mode_label
-                           int         21h
+                           cmp                  appMode, 2
+                           jne                  skip_chat_label
+                           mov                  ah,2
+                           mov                  dx,0A05h
+                           int                  10h
+                           mov                  ah, 9
+                           mov                  dx, offset mode_label
+                           int                  21h
     skip_chat_label:       
-                           mov         ah,2
-                           mov         dx,0A08h
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset chat_str
-                           int         21h
+                           mov                  ah,2
+                           mov                  dx,0A08h
+                           int                  10h
+                           mov                  ah, 9
+                           mov                  dx, offset chat_str
+                           int                  21h
 
-                           cmp         appMode, 3
-                           jne         skip_score_board_label
-                           mov         ah,2
-                           mov         dx,0E05h
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset mode_label
-                           int         21h
+                           cmp                  appMode, 3
+                           jne                  skip_score_board_label
+                           mov                  ah,2
+                           mov                  dx,0E05h
+                           int                  10h
+                           mov                  ah, 9
+                           mov                  dx, offset mode_label
+                           int                  21h
     skip_score_board_label:
-                           mov         ah,2
-                           mov         dx,0E08h
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset score_board_str
-                           int         21h
+                           mov                  ah,2
+                           mov                  dx,0E08h
+                           int                  10h
+                           mov                  ah, 9
+                           mov                  dx, offset score_board_str
+                           int                  21h
 
     skipInput:             
-                           mov         ah,0
-                           int         16h
-                           cmp         ah, 50h                         ; Check if the pressed key is Down Arrow (Scan code 50h)
-                           je          incAppMode
-                           cmp         ah, 48h                         ; Check if the pressed key is Up Arrow (Scan code 48h)
-                           je          decAppMode
-                           cmp         al, 0Dh                         ; Check if the pressed key is Enter (ASCII 0Dh)
-                           je          checkAppMode
-                           jmp         skipInput
+                           mov                  ah,0
+                           int                  16h
+                           cmp                  ah, 50h                         ; Check if the pressed key is Down Arrow (Scan code 50h)
+                           je                   incAppMode
+                           cmp                  ah, 48h                         ; Check if the pressed key is Up Arrow (Scan code 48h)
+                           je                   decAppMode
+                           cmp                  al, 0Dh                         ; Check if the pressed key is Enter (ASCII 0Dh)
+                           je                   checkAppMode
+                           jmp                  skipInput
 
     incAppMode:            
-                           cmp         appMode, 3
-                           je          setAppModeToOne
-                           inc         appMode
-                           jmp         main_menu
+                           cmp                  appMode, 3
+                           je                   setAppModeToOne
+                           inc                  appMode
+                           jmp                  main_menu
     setAppModeToOne:       
-                           mov         appMode, 1
-                           jmp         main_menu
+                           mov                  appMode, 1
+                           jmp                  main_menu
 
     decAppMode:            
-                           cmp         appMode, 1
-                           je          setAppModeToThree
-                           dec         appMode
-                           jmp         main_menu
+                           cmp                  appMode, 1
+                           je                   setAppModeToThree
+                           dec                  appMode
+                           jmp                  main_menu
     setAppModeToThree:     
-                           mov         appMode, 3
-                           jmp         main_menu
+                           mov                  appMode, 3
+                           jmp                  main_menu
 
     checkAppMode:          
-                           cmp         appMode, 1
-                           je          callGame
-                           cmp         appMode, 2
-                           je          callChat
-                           cmp         appMode, 3
-                           je          callBoard
-                           jmp         main_menu                       ; redundant
+                           cmp                  appMode, 1
+                           je                   callGame
+                           cmp                  appMode, 2
+                           je                   callChat
+                           cmp                  appMode, 3
+                           je                   callBoard
+                           jmp                  main_menu                       ; redundant
 
     callGame:              
-                           call        WaitForPlayers
-                           call        Game
-                           jmp         main_menu
+                           call                 WaitForPlayers
+                           call                 Game
+                           jmp                  main_menu
 
     callChat:              
-                           call        CHAT_WINDOW
-                           jmp         main_menu
+                           call                 CHAT_WINDOW
+                           jmp                  main_menu
 
     callBoard:             
-                           call        SCORE_BOARD
-                           jmp         main_menu
+                           call                 SCORE_BOARD
+                           jmp                  main_menu
 
-                           MOV         AX, 4C00h
-                           INT         21h
+                           MOV                  AX, 4C00h
+                           INT                  21h
 MAIN ENDP
 
 SCORE_BOARD PROC
-                           mov         ax,0600h
-                           mov         cx,0
-                           mov         dx,184FH
-                           int         10h
-                           mov         ah, 2
-                           mov         dx, 0
-                           int         10h
-                           mov         ah, 9
-                           mov         dx, offset board_demo_str
-                           int         21h
+                           mov                  ax,0600h
+                           mov                  cx,0
+                           mov                  dx,184FH
+                           int                  10h
+                           mov                  ah, 2
+                           mov                  dx, 0
+                           int                  10h
+                           mov                  ah, 9
+                           mov                  dx, offset board_demo_str
+                           int                  21h
     continueBoard:         
-                           mov         ah,0
-                           int         16h
-                           cmp         al, 1Bh                         ; Check if the pressed key is ESC (ASCII 1Bh)
-                           jne         continueBoard
+                           mov                  ah,0
+                           int                  16h
+                           cmp                  al, 1Bh                         ; Check if the pressed key is ESC (ASCII 1Bh)
+                           jne                  continueBoard
                            ret
 SCORE_BOARD ENDP
 
 CHAT_WINDOW PROC
-                           mov        ah, 0          ; BIOS video service: Set video mode
-                           mov        al, 3          ; Video mode 3: 80x25 text mode
-                           int        10h            ; Call BIOS interrupt
+                           mov                  ah, 0                           ; BIOS video service: Set video mode
+                           mov                  al, 3                           ; Video mode 3: 80x25 text mode
+                           int                  10h                             ; Call BIOS interrupt
                           
                            clearscreen_textMode
-                           DisplayUsers player1, player2
+                           DisplayUsers         player1, player2
        
-    ChatLoop:
-                           call        chat
-                           cmp         terminateChat,1
-                           jnz         ChatLoop 
+    ChatLoop:              
+                           call                 chat
+                           cmp                  terminateChat,1
+                           jnz                  ChatLoop
 
-                           mov         terminateChat, 0  ;to reset chat
+                           mov                  terminateChat, 0                ;to reset chat
                           
-                        ;    return back to video mode
-                           mov         ah, 0   
-                           mov         al, 4h
-                           int         10h
+    ;    return back to video mode
+                           mov                  ah, 0
+                           mov                  al, 4h
+                           int                  10h
                            ret
 CHAT_WINDOW ENDP
 
 GAME PROC
 
-                           MOV         AX, 4F02h
-                           MOV         BX, 103h
-                           INT         10h
+                           MOV                  AX, 4F02h
+                           MOV                  BX, 103h
+                           INT                  10h
 
-                           CALL        DrawLevel1
-                           CALL        DrawLevel1_2
+                           CALL                 DrawLevel1
+                           CALL                 DrawLevel1_2
 
     ; CALL      DrawLevel2
     ; lea si, songNotes
@@ -536,102 +538,107 @@ GAME PROC
 
     gameLoop:              
 
-                           CMP         inReset, 1
-                           JE          waitForReset1
-                           Collision   selected_level
-                           CALL        Receive
-                           CALL        MovePadel
-                           CALL        DrawPadel
-                           MOV         ball_color, 0
-                           CALL        DrawBall
-                           CALL        MoveBall
-                           
-                           CALL        sendDelay
-                           
-                           mov         ball_color_2, 0
-                           call        DrawBall_2
-                           Call        Receive
+                           CMP                  inReset, 1
+                           JE                   waitForReset1
+                           Collision            selected_level
+                           CALL                 Receive
+                           mov                  al,ball_color
+                           mov                  ah,0
+                           and                  al, 00111111b
+                           or                   al, 00100000b
+                           mov                  sendv, ax
+                           CALL                 Send
 
-                           mov         bx, ball_x
-                           mov         cl,3
-                           shr         bx , cl
-                           or          bx , 01000000b
-                           mov         sendv, bx
-                           CALL        Send
+       CALL                 sendDelay
+
+       CALL                 Receive
+                           CALL                 MovePadel
+                           CALL                 DrawPadel
+                           MOV                  ball_color, 0
+                           CALL                 DrawBall
+                           CALL                 MoveBall
                            
-                           CALL        sendDelay
+       CALL                 sendDelay
+                           
+       mov                  ball_color_2, 0
+       call                 DrawBall_2
+       Call                 Receive
 
-                           mov         ball_color_2, 0
-                           call        DrawBall_2
-                           Call        Receive
+       mov                  bx, ball_x
+       mov                  cl,3
+       shr                  bx , cl
+       or                   bx , 01000000b
+       mov                  sendv, bx
+       CALL                 Send
+                           
+       CALL                 sendDelay
 
-                           mov         bx, ball_y
-                           sub         bx,200
-                           mov         cl,3
-                           shr         bx , cl
-                           or          bx , 11000000b
-                           mov         sendv, bx
-                           CALL        Send
+       mov                  ball_color_2, 0
+       call                 DrawBall_2
+       Call                 Receive
+
+       mov                  bx, ball_y
+       sub                  bx,200
+       mov                  cl,3
+       shr                  bx , cl
+       or                   bx , 11000000b
+       mov                  sendv, bx
+       CALL                 Send
  
  
-                           MOV         BL, gift_ball_color
-                           MOV         ball_color, BL
-                           CALL        DrawBall
+                           MOV                  BL, gift_ball_color
+                           MOV                  ball_color, BL
+                           CALL                 DrawBall
                            
                            
 
-                           CALL        GiftLogic_1
-                           JMP         skipPlayer1
+                           CALL                 GiftLogic_1
+                           JMP                  skipPlayer1
 
     waitForReset1:         
-                           mov         cx, 1000h
-    waitloop:              
-                           loop        waitloop
 
-                           MOV         AH, 1
-                           INT         16h
-                           JNZ         resetPlayer1Done
-                           JMP         skipPlayer1
+                           MOV                  AH, 1
+                           INT                  16h
+                           JNZ                  resetPlayer1Done
+                           JMP                  skipPlayer1
 
     resetPlayer1Done:      
-                           MOV         inReset, 0
+                           MOV                  inReset, 0
 
     skipPlayer1:           
 
 
-                           CMP         inReset_2, 1
-                           JE          waitForReset2
-                           Collision_2 selected_level_2
-                           CALL        DrawPadel_2
-                           CALL        MovePadel_2
-                           MOV         ball_color_2, 0
-                           CALL        DrawBall_2
-                           CALL        MoveBall_2
-    ;MOV         BL, gift_ball_color_2
-                           MOV         ball_color_2, 2
-                           JMP         skipPlayer2
+                           CMP                  inReset_2, 1
+                           JE                   waitForReset2
+                           Collision_2          selected_level_2
+                           CALL                 DrawPadel_2
+                           CALL                 MovePadel_2
+                           MOV                  ball_color_2, 0
+                           CALL                 DrawBall_2
+                           CALL                 MoveBall_2
+                           MOV                  BL, gift_ball_color_2
+                           MOV                  ball_color_2, BL
+                           JMP                  skipPlayer2
 
     waitForReset2:         
-                           mov         cx, 1000h
-    waitloop_2:            
-                           loop        waitloop_2
-                           MOV         AH, 1
-                           INT         16h
-                           JNZ         resetPlayer2Done
-                           JMP         skipPlayer2
+
+                           MOV                  AH, 1
+                           INT                  16h
+                           JNZ                  resetPlayer2Done
+                           JMP                  skipPlayer2
 
     resetPlayer2Done:      
-                           MOV         inReset_2, 0
+                           MOV                  inReset_2, 0
 
     skipPlayer2:           
-                           CALL        DrawBall_2
+                           CALL                 DrawBall_2
 
 
-                           CALL        DisplayScore
-                           CALL        DisplayLives
-                           CALL        DisplayScore_2
-                           CALL        DisplayLives_2
-                           JMP         gameLoop                        ; Restart the song from the beginning
+                           CALL                 DisplayScore
+                           CALL                 DisplayLives
+                           CALL                 DisplayScore_2
+                           CALL                 DisplayLives_2
+                           JMP                  gameLoop                        ; Restart the song from the beginning
     ; :( too hard
                            ret
 GAME ENDP
@@ -640,32 +647,32 @@ GAME ENDP
 WaitForPlayers PROC
     startanimate:          
     ; Clear the screen
-                           mov         ax, 0600h                       ; Function 06h: Scroll screen up
-                           mov         bh, 0                           ; Background color (black)
-                           mov         cx, 0                           ; Upper-left corner (row 0, column 0)
-                           mov         dx, 184Fh                       ; Lower-right corner (row 24, column 79)
-                           int         10h                             ; Call BIOS interrupt to clear the screen
+                           mov                  ax, 0600h                       ; Function 06h: Scroll screen up
+                           mov                  bh, 0                           ; Background color (black)
+                           mov                  cx, 0                           ; Upper-left corner (row 0, column 0)
+                           mov                  dx, 184Fh                       ; Lower-right corner (row 24, column 79)
+                           int                  10h                             ; Call BIOS interrupt to clear the screen
 
     ; Display "Waiting for Players" at a specific position
-                           mov         ah, 2                           ; Function 02h: Set cursor position
-                           mov         dh, 0Ah                         ; Row position (change this to move vertically)
-                           mov         dl, 8h                          ; Column position (change this to move horizontally)
-                           int         10h                             ; Call BIOS interrupt to position the cursor
+                           mov                  ah, 2                           ; Function 02h: Set cursor position
+                           mov                  dh, 0Ah                         ; Row position (change this to move vertically)
+                           mov                  dl, 8h                          ; Column position (change this to move horizontally)
+                           int                  10h                             ; Call BIOS interrupt to position the cursor
 
-                           mov         ah, 9                           ; Function 09h: Display string
-                           mov         dx, offset waiting_str          ; Offset of the string to display
-                           int         21h
-                           mov         bx,0
+                           mov                  ah, 9                           ; Function 09h: Display string
+                           mov                  dx, offset waiting_str          ; Offset of the string to display
+                           int                  21h
+                           mov                  bx,0
     delay_loop:            
-                           CALL        delay
+                           CALL                 delay
     
-                           mov         ah, 9                           ; Function 09h: Display string
-                           mov         dx, offset dots_str             ; Offset of the string to display
-                           int         21h
-                           inc         bx
-                           cmp         bx,5
-                           jl          delay_loop
-                           jmp         startanimate
+                           mov                  ah, 9                           ; Function 09h: Display string
+                           mov                  dx, offset dots_str             ; Offset of the string to display
+                           int                  21h
+                           inc                  bx
+                           cmp                  bx,5
+                           jl                   delay_loop
+                           jmp                  startanimate
                            ret
 WaitForPlayers ENDP
 
@@ -673,111 +680,111 @@ WaitForPlayers ENDP
 
 delay proc
     delaying:              
-                           in          al, dx
-                           and         al, 00100000b
-                           jz          noKey
+                           in                   al, dx
+                           and                  al, 00100000b
+                           jz                   noKey
 
-                           mov         dx, 3F8h
-                           mov         al, 1
-                           out         dx, al
+                           mov                  dx, 3F8h
+                           mov                  al, 1
+                           out                  dx, al
     noKey:                 
-                           mov         dx, 3FDh
-                           in          al, dx
-                           and         al, 1
-                           jz          noRecievedData
+                           mov                  dx, 3FDh
+                           in                   al, dx
+                           and                  al, 1
+                           jz                   noRecievedData
 
-                           mov         dx, 3F8h
-                           in          al, dx
-                           cmp         al,1
-                           jnz         noRecievedData
+                           mov                  dx, 3F8h
+                           in                   al, dx
+                           cmp                  al,1
+                           jnz                  noRecievedData
                            
                     
-                           CALL        GAME
+                           CALL                 GAME
     noRecievedData:        
-                           mov         ah, 2ch
-                           int         21h
+                           mov                  ah, 2ch
+                           int                  21h
 
-                           cmp         dh, seconds
-                           je          delaying
-                           mov         seconds, dh
+                           cmp                  dh, seconds
+                           je                   delaying
+                           mov                  seconds, dh
                            ret
 delay endp
 sendDelay PROC
-                           mov         bx,0FFFFh
+                           mov                  bx,0FFFFh
     sloop:                 
-                           loop        sloop
+                           loop                 sloop
                            ret
 sendDelay ENDP
 
 beep proc FAR
-                           push        ax
-                           push        bx
-                           push        cx
-                           push        dx
+                           push                 ax
+                           push                 bx
+                           push                 cx
+                           push                 dx
 
-                           mov         al, 182                         ; Prepare the speaker for the
-                           out         43h, al                         ;  note.
-                           mov         ax, 400                         ; Frequency number (in decimal)
+                           mov                  al, 182                         ; Prepare the speaker for the
+                           out                  43h, al                         ;  note.
+                           mov                  ax, 400                         ; Frequency number (in decimal)
     ;  for middle C.
-                           out         42h, al                         ; Output low byte.
-                           mov         al, ah                          ; Output high byte.
-                           out         42h, al
-                           in          al, 61h                         ; Turn on note (get value from
+                           out                  42h, al                         ; Output low byte.
+                           mov                  al, ah                          ; Output high byte.
+                           out                  42h, al
+                           in                   al, 61h                         ; Turn on note (get value from
     ;  port 61h).
-                           or          al, 00000011b                   ; Set bits 1 and 0.
-                           out         61h, al                         ; Send new value.
-                           mov         bx, 2                           ; Pause for duration of note.
+                           or                   al, 00000011b                   ; Set bits 1 and 0.
+                           out                  61h, al                         ; Send new value.
+                           mov                  bx, 2                           ; Pause for duration of note.
 .pause1:
-                           mov         cx, 65535
+                           mov                  cx, 65535
 .pause2:
-                           dec         cx
-                           jne         .pause2
-                           dec         bx
-                           jne         .pause1
-                           in          al, 61h                         ; Turn off note (get value from
+                           dec                  cx
+                           jne                  .pause2
+                           dec                  bx
+                           jne                  .pause1
+                           in                   al, 61h                         ; Turn off note (get value from
     ;  port 61h).
-                           and         al, 11111100b                   ; Reset bits 1 and 0.
-                           out         61h, al                         ; Send new value.
+                           and                  al, 11111100b                   ; Reset bits 1 and 0.
+                           out                  61h, al                         ; Send new value.
 
-                           pop         dx
-                           pop         cx
-                           pop         bx
-                           pop         ax
+                           pop                  dx
+                           pop                  cx
+                           pop                  bx
+                           pop                  ax
 
                            ret
 beep endp
     ;description
 
 GiftLogic_1 PROC
-                           mov         bx, [current_gift_counter]
-                           mov         cx, gift_count
-                           cmp         bx, cx
-                           jl          reset
-                           xor         bx,bx
+                           mov                  bx, [current_gift_counter]
+                           mov                  cx, gift_count
+                           cmp                  bx, cx
+                           jl                   reset
+                           xor                  bx,bx
     reset:                 
-                           CALL        MoveGift
-                           mov         al,[gift_colors_list+bx]
-                           mov         gift_color, al
-                           mov         al,[gift_ribbon_list+bx]
-                           mov         bow_color, al
-                           mov         ribbon_color, al
+                           CALL                 MoveGift
+                           mov                  al,[gift_colors_list+bx]
+                           mov                  gift_color, al
+                           mov                  al,[gift_ribbon_list+bx]
+                           mov                  bow_color, al
+                           mov                  ribbon_color, al
 
-                           CALL        DrawGift
+                           CALL                 DrawGift
                        
 
-                           inc         bx
-                           mov         [current_gift_counter], bx
-                           cmp         gift_ball_color, 2
-                           je          wait_30
+                           inc                  bx
+                           mov                  [current_gift_counter], bx
+                           cmp                  gift_ball_color, 2
+                           je                   wait_30
 
-                           inc         [gift_timer]
-                           mov         ax, [gift_timer]
-                           cmp         ax, 10000
-                           jb          wait_30
-                           mov         gift_ball_color, 2
-                           mov         [padel_width],40
+                           inc                  [gift_timer]
+                           mov                  ax, [gift_timer]
+                           cmp                  ax, 5000
+                           jb                   wait_30
+                           mov                  gift_ball_color, 2
+                           mov                  [padel_width],40
 
-                           mov         gift_timer, 0
+                           mov                  gift_timer, 0
                         
     wait_30:               
 

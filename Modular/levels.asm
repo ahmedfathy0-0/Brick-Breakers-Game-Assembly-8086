@@ -25,6 +25,7 @@ EXTRN ball_y :WORD
 EXTRN ball_x_2 :WORD               
 EXTRN ball_y_2 :WORD 
 EXTRN gift_ball_color :BYTE  
+EXTRN gift_ball_color_2: BYTE
 EXTRN ball_dy :WORD
 EXTRN ball_dy_2 :WORD   
 
@@ -999,7 +1000,10 @@ ClearBrick_2 proc
                            push      di
                            push      si
 
-
+                           cmp       [gift_ball_color_2],1
+                           jnz        skipdouble_score_2
+                           add        display_score_2, 1
+                skipdouble_score_2:
                            add       display_score_2, 1
                            CALL      DisplayScore_2
                            CALL      beep
