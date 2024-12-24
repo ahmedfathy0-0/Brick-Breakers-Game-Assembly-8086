@@ -9,7 +9,7 @@ EXTRN SpawnGift:FAR
 EXTRN beep:FAR
 EXTRN DisplayScore:FAR
 EXTRN DisplayScore_2:FAR
-
+EXTRN GameEnd:FAR
 
 
 EXTRN score:WORD
@@ -42,10 +42,10 @@ EXTRN ball_dy_2 :WORD
       ;Bricks number of rows and columns
     score1_2         equ 28                                                                                                              ; 4 * 7
     score2_2         equ 112                                                                                                             ; 4 * 7 + 7 * 12
-    score3_2         equ 322 
+    score3_2         equ 332 
     score1           equ 28                                                                                                              ; 4 * 7
     score2           equ 112                                                                                                             ; 4 * 7 + 7 * 12
-    score3           equ 322                                                                                                             ; 4 * 7 + 7 * 12 + 10 * 21
+    score3           equ 332                                                                                                             ; 4 * 7 + 7 * 12 + 10 * 21
  
     ball_size        equ 3 
     ball_size_2      equ 3
@@ -66,7 +66,7 @@ EXTRN ball_dy_2 :WORD
     dummycol         dw  ?
     dummyrow         dw  ?
     
-    bricks           dw  220 DUP(1)                                                                                                      ; max num of bricks in a level (lvl 3)                                                                                                                                                                                                                                                                                              ; 2 * numRows * numCols
+    bricks           dw  320 DUP(1)                                                                                                      ; max num of bricks in a level (lvl 3)                                                                                                                                                                                                                                                                                              ; 2 * numRows * numCols
 
     ;Brick dimensions
     rwidth           dw  50
@@ -94,7 +94,7 @@ EXTRN ball_dy_2 :WORD
     dummycol_2       dw  ?
     dummyrow_2       dw  ?
     ;Bricks existence
-    bricks_2         dw  220 DUP(1)                                                                                                      ; max num of bricks in a level (lvl 3)                                                                                                                                                                                                                                                                                              ; 2 * numRows * numCols
+    bricks_2         dw  320 DUP(1)                                                                                                      ; max num of bricks in a level (lvl 3)                                                                                                                                                                                                                                                                                              ; 2 * numRows * numCols
 
     ;Brick dimensions
     rwidth_2         dw  50
@@ -973,10 +973,7 @@ ClearBrick proc
                            call      DrawRectangle3
                            cmp       score, score3
                            jne       same_lvl
-                           call      ResetBricks
-                           mov       selected_level, 3
-                           mov       score, score2
-                           call      ResetAll
+                           CALL      GameEnd
 
     same_lvl:              
                            CALL      SpawnGift

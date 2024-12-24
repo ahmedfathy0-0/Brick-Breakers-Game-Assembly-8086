@@ -89,7 +89,11 @@
 
     EXTRN display_lives :BYTE
     EXTRN display_lives_2 :BYTE
-
+    EXTRN score :WORD
+    EXTRN display_score :WORD
+    EXTRN display_score_2 :WORD
+    EXTRN display_lives :BYTE
+    EXTRN display_lives_2 :BYTE
 
     EXTRN selected_level :BYTE
     EXTRN selected_level_2 :BYTE
@@ -100,7 +104,7 @@
     ; EXTRN player2 :BYTE
 
  
-    PUBLIC  ResetAll,ResetAll_2,beep
+    PUBLIC  ResetAll,ResetAll_2,beep,GameEnd
 
 
 
@@ -113,7 +117,13 @@
     chat_str         DB  'Chat$'
     score_board_str  DB  'Score Board$'
     chat_demo_str    DB  'Chat Demo$'
-    board_demo_str   DB  'Score Board Demo$'
+    game_over_demo_str    DB 'Game Over Demo$'
+    you_won_str           DB 'You Won$'
+    you_lost_str          DB 'You Lost$'
+    no_lives_str          DB 'You ran out of Lives$'
+    board_demo_str        DB 'Score Board Demo$'
+    your_score_str        DB 'Your Score: $'
+    opp_score_str        DB 'Opp Score: $'
     mode_label       DB  '=> $'
     waiting_str      DB  'Waiting for Players$'
     dots_str         DB  ".$", "..", "...", "....", 0
@@ -130,7 +140,12 @@
     divide_factor_2  equ 2
 
     inReset          db  0
-
+    score1_2         equ 28                                                                                                              ; 4 * 7
+    score2_2         equ 112                                                                                                             ; 4 * 7 + 7 * 12
+    score3_2         equ 332 
+    score1           equ 28                                                                                                              ; 4 * 7
+    score2           equ 112                                                                                                             ; 4 * 7 + 7 * 12
+    score3           equ 332  
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -267,13 +282,16 @@ ResetAll PROC FAR
                            CALL                 DrawGift
                            pop                  bx
 
-                           mov                  [gift_ball_color],2
-                           mov                  [padel_width],40
-                           mov                  [padel_x] ,199
-                           mov                  [gift_timer],0
-                           dec                  display_lives
-                           cmp                  display_lives, 0
-    ;    jle        GAMEOVERdd
+                           mov         [gift_ball_color],2
+                           mov         [padel_width],40
+                           mov         [padel_x] ,199
+                           mov         [gift_timer],0
+                           dec         display_lives
+                           cmp         display_lives, 0
+                           jg        no_end_game
+                           CALL      GameEnd
+                           RET
+no_end_game:
 
                            
 
@@ -529,9 +547,9 @@ GAME PROC
                            MOV                  BX, 103h
                            INT                  10h
 
-                           CALL                 DrawLevel1
-                           CALL                 DrawLevel1_2
-
+                           CALL        DrawLevel1
+                           CALL        DrawLevel1_2
+                            mov score, 322
     ; CALL      DrawLevel2
     ; lea si, songNotes
     ; push si
@@ -676,7 +694,103 @@ WaitForPlayers PROC
                            ret
 WaitForPlayers ENDP
 
+GameEnd PROC FAR
+    mov ah, 0
+    mov al, 4h
+    int 10h ; set video mode
+    mov ax,0600h
+    mov cx,0
+    mov dx,184FH
+    int 10h ; clear screen
+    mov ah, 2
+    mov dx, 0A0Fh
+    int 10h ;set cursor
 
+    cmp display_lives, 0
+    jne display_lose_or_win
+    mov ah, 9
+    mov dx, offset no_lives_str
+    int 21h
+    jmp exit_end_game
+
+display_lose_or_win:
+    cmp score, score3
+    jne display_lose
+
+    mov ah, 9
+    mov dx, offset you_won_str
+    int 21h
+    jmp continueGameOver
+
+display_lose:
+    mov ah, 9
+    mov dx, offset you_lost_str
+    int 21h
+
+continueGameOver:
+    mov ah, 2
+    mov dx, 0C0Ch
+    int 10h ; set cursor
+    mov ah, 9
+    mov dx, offset your_score_str
+    int 21h
+; display number should be a micro
+    push  ax
+    mov   ax, display_score
+    xor   cx,cx
+    mov   bx,10
+    divLoopsc:      
+    xor   dx,dx
+    div   bx
+    push  dx
+    inc   cx
+    cmp   ax,0
+    ja    divLoopsc
+    mov   ah, 0Eh
+    printLoopsc:    
+    pop   dx
+    mov   al,dl
+    or    al,'0'
+    int   10h
+    loop  printLoopsc
+    pop   ax
+
+    mov ah, 2
+    mov dx, 0E0Ch
+    int 10h ; set cursor
+    mov ah, 9
+    mov dx, offset opp_score_str
+    int 21h
+; display number should be a micro
+    push  ax
+    mov   ax, display_score_2
+    xor   cx,cx
+    mov   bx,10
+    divLoopsc_2:      
+    xor   dx,dx
+    div   bx
+    push  dx
+    inc   cx
+    cmp   ax,0
+    ja    divLoopsc_2
+    mov   ah, 0Eh
+    printLoopsc_2:    
+    pop   dx
+    mov   al,dl
+    or    al,'0'
+    int   10h
+    loop  printLoopsc_2
+    pop   ax
+
+exit_end_game:
+    mov ah,0
+    int 16h
+    cmp al, 1Bh  ; Check if the pressed key is ESC (ASCII 1Bh)
+    jne exit_end_game
+
+    MOV         AX, 4C00h
+    INT         21h
+GameEnd ENDP
 
 delay proc
     delaying:              
