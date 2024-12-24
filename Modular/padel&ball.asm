@@ -120,7 +120,7 @@ DrawPadel ENDP
 
 DrawPadel_2 PROC FAR
                    mov  dx, padel_y1_2
-    fill_outer_2:  
+    fill_outer_2:    
                    inc  dx
                    cmp  dx, padel_y2_2
                    jz   end_Draw_2
@@ -133,7 +133,7 @@ DrawPadel_2 PROC FAR
                    mov  padel_x2_2, ax
 
                    mov  cx, padel_x1_2
-    fill_inner_2:  
+    fill_inner_2:    
                    inc  cx
                    cmp  cx, padel_x2_2
                    jz   fill_outer_2
@@ -143,7 +143,7 @@ DrawPadel_2 PROC FAR
                    int  10h
                    jmp  fill_inner_2
 
-    end_Draw_2:    
+    end_Draw_2:      
                    RET
 DrawPadel_2 ENDP
 MovePadel PROC  FAR
@@ -199,32 +199,31 @@ MovePadel_2 PROC  FAR
 
                    mov  dx, 3F8h
                    in   al, dx
-                   cmp  AL, 'l'
+                   cmp  AL, 'd'
                    jz   MoveRight_2
-                   cmp  AL, 'j'
+                   cmp  AL, 'a'
                    jz   MoveLeft_2
-    noKeyPressed_2:
+                          
+    noKeyPressed_2:  
                    RET
-    MoveRight_2:   
+    MoveRight_2:     
                    cmp  padel_x2_2, 799
                    jge  stop_move_2
-                   mov  padel_color_2, 0
+                   mov  [padel_color_2],0
                    call DrawPadel_2
-                   add  padel_x1_2, padel_speed_2
-                   add  padel_x2_2, padel_speed_2
-                   mov  padel_color_2, 4
+                   mov  [padel_color_2],4
+                   add  padel_x_2, padel_speed_2
                    RET
                      
-    MoveLeft_2:    
+    MoveLeft_2:      
                    cmp  padel_x1_2, 410
                    jle  stop_move_2
-                   mov  padel_color_2, 0
+                   mov  [padel_color_2],0
                    call DrawPadel_2
-                   sub  padel_x1_2, padel_speed_2
-                   sub  padel_x2_2, padel_speed_2
-                   mov  padel_color_2, 4
+                   mov  [padel_color_2],4
+                   sub  padel_x_2, padel_speed_2
                    RET
-    stop_move_2:   
+    stop_move_2:     
                    RET
 MovePadel_2 ENDP
 

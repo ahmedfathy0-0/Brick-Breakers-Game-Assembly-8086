@@ -98,13 +98,15 @@
 .STACK 100h
 
 .DATA
-    appMode          DB  1                                                                                                               ; 1 for game, 2 for chat, 3 for scoreboard if existed
+    appMode          DB  1                               ; 1 for game, 2 for chat, 3 for scoreboard if existed
     start_game_str   DB  'Start Game$'
     chat_str         DB  'Chat$'
     score_board_str  DB  'Score Board$'
     chat_demo_str    DB  'Chat Demo$'
     board_demo_str   DB  'Score Board Demo$'
     mode_label       DB  '=> $'
+    waiting_str      DB  'Waiting for Players$'
+    dots_str         DB  ".$", "..", "...", "....", 0
 
     padel_speed      equ 7
     padel_speed_2    equ 7
@@ -165,13 +167,14 @@
     ;             A6_freq, D6_freq
 
     noteCount        equ 40
-    noteTimer        dw  100                                                                                                             ; Timer to control note playing
+    noteTimer        dw  100                             ; Timer to control note playing
 
     freq             dw  0
-    currentNotePos   dw  0                                                                                                               ; Tracks the current position in the songNotes array
+    currentNotePos   dw  0                               ; Tracks the current position in the songNotes array
 
     timerForSwitch   dw  60
     ogTimerForSwitch equ 60
+    seconds          db  4                               ;◄■■ VARIABLE IN DATA SEGMENT.
 
 
 
@@ -333,6 +336,28 @@ ResetAll_2 ENDP
 MAIN PROC
                            MOV         AX, @DATA
                            MOV         DS, AX
+    ; initinalize COM
+    ;Set Divisor Latch Access Bit
+                           mov         dx,3fbh                         ; Line Control Register
+                           mov         al,10000000b                    ;Set Divisor Latch Access Bit
+                           out         dx,al                           ;Out it
+    ;Set LSB byte of the Baud Rate Divisor Latch register.
+                           mov         dx,3f8h
+                           mov         al,0ch
+                           out         dx,al
+
+    ;Set MSB byte of the Baud Rate Divisor Latch register.
+                           mov         dx,3f9h
+                           mov         al,00h
+                           out         dx,al
+
+    ;Set port configuration
+                           mov         dx,3fbh
+                           mov         al,00011011b
+                           out         dx,al
+
+
+
                            mov         ah, 0
                            mov         al, 4h
                            int         10h
@@ -393,11 +418,11 @@ MAIN PROC
     skipInput:             
                            mov         ah,0
                            int         16h
-                           cmp         ah, 50h                           ; Check if the pressed key is Down Arrow (Scan code 50h)
+                           cmp         ah, 50h                         ; Check if the pressed key is Down Arrow (Scan code 50h)
                            je          incAppMode
-                           cmp         ah, 48h                           ; Check if the pressed key is Up Arrow (Scan code 48h)
+                           cmp         ah, 48h                         ; Check if the pressed key is Up Arrow (Scan code 48h)
                            je          decAppMode
-                           cmp         al, 0Dh                           ; Check if the pressed key is Enter (ASCII 0Dh)
+                           cmp         al, 0Dh                         ; Check if the pressed key is Enter (ASCII 0Dh)
                            je          checkAppMode
                            jmp         skipInput
 
@@ -426,10 +451,11 @@ MAIN PROC
                            je          callChat
                            cmp         appMode, 3
                            je          callBoard
-                           jmp         main_menu                         ; redundant
+                           jmp         main_menu                       ; redundant
 
     callGame:              
-                           call        GAME
+                           call        WaitForPlayers
+                           call        Game
                            jmp         main_menu
 
     callChat:              
@@ -458,7 +484,7 @@ SCORE_BOARD PROC
     continueBoard:         
                            mov         ah,0
                            int         16h
-                           cmp         al, 1Bh                           ; Check if the pressed key is ESC (ASCII 1Bh)
+                           cmp         al, 1Bh                         ; Check if the pressed key is ESC (ASCII 1Bh)
                            jne         continueBoard
                            ret
 SCORE_BOARD ENDP
@@ -477,7 +503,7 @@ CHAT PROC
     continueChat:          
                            mov         ah,0
                            int         16h
-                           cmp         al, 1Bh                           ; Check if the pressed key is ESC (ASCII 1Bh)
+                           cmp         al, 1Bh                         ; Check if the pressed key is ESC (ASCII 1Bh)
                            jne         continueChat
                            ret
 CHAT ENDP
@@ -535,8 +561,8 @@ GAME PROC
                            MOV         ball_color_2, 0
                            CALL        DrawBall_2
                            CALL        MoveBall_2
-                        ;    MOV         BL, gift_ball_color_2
-                        ;    MOV         ball_color_2, BL
+    ;MOV         BL, gift_ball_color_2
+                           MOV         ball_color_2, 2
                            JMP         skipPlayer2
 
     waitForReset2:         
@@ -559,11 +585,77 @@ GAME PROC
                            CALL        DisplayLives
                            CALL        DisplayScore_2
                            CALL        DisplayLives_2
-                           JMP         gameLoop                          ; Restart the song from the beginning
+                           JMP         gameLoop                        ; Restart the song from the beginning
     ; :( too hard
                            ret
 GAME ENDP
 
+
+WaitForPlayers PROC
+    startanimate:          
+    ; Clear the screen
+                           mov         ax, 0600h                       ; Function 06h: Scroll screen up
+                           mov         bh, 0                           ; Background color (black)
+                           mov         cx, 0                           ; Upper-left corner (row 0, column 0)
+                           mov         dx, 184Fh                       ; Lower-right corner (row 24, column 79)
+                           int         10h                             ; Call BIOS interrupt to clear the screen
+
+    ; Display "Waiting for Players" at a specific position
+                           mov         ah, 2                           ; Function 02h: Set cursor position
+                           mov         dh, 0Ah                         ; Row position (change this to move vertically)
+                           mov         dl, 8h                          ; Column position (change this to move horizontally)
+                           int         10h                             ; Call BIOS interrupt to position the cursor
+
+                           mov         ah, 9                           ; Function 09h: Display string
+                           mov         dx, offset waiting_str          ; Offset of the string to display
+                           int         21h
+                           mov         bx,0
+    delay_loop:            
+                           CALL        delay
+    
+                           mov         ah, 9                           ; Function 09h: Display string
+                           mov         dx, offset dots_str             ; Offset of the string to display
+                           int         21h
+                           inc         bx
+                           cmp         bx,5
+                           jl          delay_loop
+                           jmp         startanimate
+                           ret
+WaitForPlayers ENDP
+
+
+
+delay proc
+    delaying:              
+                           in          al, dx
+                           and         al, 00100000b
+                           jz          noKey
+
+                           mov         dx, 3F8h
+                           mov         al, 1
+                           out         dx, al
+    noKey:                 
+                           mov         dx, 3FDh
+                           in          al, dx
+                           and         al, 1
+                           jz          noRecievedData
+
+                           mov         dx, 3F8h
+                           in          al, dx
+                           cmp         al,1
+                           jnz         noRecievedData
+                           
+                    
+                           CALL        GAME
+    noRecievedData:        
+                           mov         ah, 2ch
+                           int         21h
+
+                           cmp         dh, seconds
+                           je          delaying
+                           mov         seconds, dh
+                           ret
+delay endp
 
 beep proc FAR
                            push        ax
@@ -571,18 +663,18 @@ beep proc FAR
                            push        cx
                            push        dx
 
-                           mov         al, 182                           ; Prepare the speaker for the
-                           out         43h, al                           ;  note.
-                           mov         ax, 400                           ; Frequency number (in decimal)
+                           mov         al, 182                         ; Prepare the speaker for the
+                           out         43h, al                         ;  note.
+                           mov         ax, 400                         ; Frequency number (in decimal)
     ;  for middle C.
-                           out         42h, al                           ; Output low byte.
-                           mov         al, ah                            ; Output high byte.
+                           out         42h, al                         ; Output low byte.
+                           mov         al, ah                          ; Output high byte.
                            out         42h, al
-                           in          al, 61h                           ; Turn on note (get value from
+                           in          al, 61h                         ; Turn on note (get value from
     ;  port 61h).
-                           or          al, 00000011b                     ; Set bits 1 and 0.
-                           out         61h, al                           ; Send new value.
-                           mov         bx, 2                             ; Pause for duration of note.
+                           or          al, 00000011b                   ; Set bits 1 and 0.
+                           out         61h, al                         ; Send new value.
+                           mov         bx, 2                           ; Pause for duration of note.
 .pause1:
                            mov         cx, 65535
 .pause2:
@@ -590,10 +682,10 @@ beep proc FAR
                            jne         .pause2
                            dec         bx
                            jne         .pause1
-                           in          al, 61h                           ; Turn off note (get value from
+                           in          al, 61h                         ; Turn off note (get value from
     ;  port 61h).
-                           and         al, 11111100b                     ; Reset bits 1 and 0.
-                           out         61h, al                           ; Send new value.
+                           and         al, 11111100b                   ; Reset bits 1 and 0.
+                           out         61h, al                         ; Send new value.
 
                            pop         dx
                            pop         cx
