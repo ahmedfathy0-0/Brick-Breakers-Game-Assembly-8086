@@ -256,7 +256,7 @@ chat proc far
             jmp SkipEnter
 NotBackSpace:
             call movcurserSender
-SkipMovingCursor:
+
             ;print char to be sent
             mov ah,9
             mov bh,0 
@@ -313,6 +313,21 @@ SkipEnter:
             cmp al,0Dh                  ;to see if it is enter
             jz EnterCharReceiver
 
+            cmp al,08h
+            jnz NotBackSpaceRecevied   ;if zero then delete and move cursor back 
+          
+            mov ah, 9          ; Write character function
+            mov al, ' '        ; Space character to overwrite the previous character
+            mov bh, 0          ; Page number
+            mov cx, 1          ; number of times to write the character
+            int 10h
+            
+            call moveCursorBackReceiver     ;adjust column and row values for sender
+            mov dl, column_receiver         ;values are put in dh and dl to be ready for the interrupt
+            mov dh, row_receiver
+            call SetCursorPosition        ;sets cursor according to the values in dh and dl
+            jmp skipchat
+NotBackSpaceRecevied:
            call moveCursorReceiver
 
             mov ah,9
