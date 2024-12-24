@@ -1,28 +1,3 @@
-
-initiate macro
-                                            ; initinalize COM
-                                            ;Set Divisor Latch Access Bit
-            mov dx,3fbh 			        ; Line Control Register
-            mov al,10000000b		        ;Set Divisor Latch Access Bit
-            out dx,al				        ;Out it
-        
-                                            ;baud rate 9600
-            ;Set LSB byte of the Baud Rate Divisor Latch register.
-            mov dx,3f8h			
-            mov al,0ch			
-            out dx,al                      ;address of port is saved in dx
-        
-            ;Set MSB byte of the Baud Rate Divisor Latch register.
-            mov dx,3f9h
-            mov al,00h
-            out dx,al
-        
-            ;Set port configuration             ;is set at both sender and receiver
-            mov dx,3fbh
-            mov al,00011011b
-            out dx,al
-endm
-
 PUBLIC terminateChat
 PUBLIC chat
 PUBLIC player1
@@ -50,9 +25,6 @@ row_receiver db 13   ;saves last row written in receiver  [13-24]
 Main proc
     mov ax, @data
     mov ds, ax
-
-    initiate
-
 
 ChatLoop:
     call chat
@@ -206,25 +178,35 @@ chat proc far
             Int 16h
 
             mov char, al
+           
+            cmp al,0Dh                  ;to see if it is enter
+            jz EnterChar
 
             call movcurserSender
-                              ;print char to be sent
+            ;print char to be sent
             mov ah,9
             mov bh,0 
             mov cx,1
             mov bl,0ah
             int 10h 
-            
+            jmp SkipEnter
+EnterChar: 
+            cmp row_sender, 10
+            jz SkipEnter
+            inc row_sender
+            mov column_sender, 0  
+
+SkipEnter:                      
 
                                         ;Check that Transmitter Holding Register is Empty
-            mov dx , 3FDH		; Line Status Register
+            mov dx , 3FDH		        ; Line Status Register
     AGAIN:  
-            In al , dx 			;Read Line Status
+            In al , dx 			        ;Read Line Status
             AND al , 00100000b          ;this exact bit tells me wether the reg is ready to send or not (add a char or abit to send) 
             JZ AGAIN
 
                                         ;If empty put the VALUE in Transmit data register
-            mov dx , 3F8H		; Transmit data register (sending data)
+            mov dx , 3F8H		        ; Transmit data register (sending data)
             mov al,char
             out dx , al 
          
@@ -247,7 +229,10 @@ chat proc far
 
             cmp al,1Bh     ;if recieved char is esc terminate connection
             jz termChat
-          
+            
+            cmp al,0Dh                  ;to see if it is enter
+            jz EnterCharReceiver
+
            call moveCursorReceiver
 
             mov ah,9
@@ -255,6 +240,13 @@ chat proc far
             mov cx,1
             mov bl,09h
             int 10h 
+            jmp skipchat
+
+EnterCharReceiver:
+            cmp row_receiver, 23
+            jz skipchat
+            inc row_receiver
+            mov column_receiver, 0            
 
             jmp skipchat       ;to not terminate the connection
 termChat:
