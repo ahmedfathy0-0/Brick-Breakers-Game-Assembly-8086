@@ -6,3 +6,8 @@
 
 # Ignore all .conf files
 *.conf
+
+Modular/run.py
+
+Modular/dosbox-x-generated1.conf
+Modular/dosbox-x-generated2.conf
