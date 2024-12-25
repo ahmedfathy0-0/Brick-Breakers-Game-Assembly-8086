@@ -8,7 +8,7 @@ Welcome to **Brick Breakers Game** — a competitive two-player paddle game writ
 The game features a main menu with the following options:
 1. **Play** 🎮  
    - Jump right into the action!
-2. **Chat** 💬 *(Coming Soon)*  
+2. **Chat** 💬  
    - A text-based communication mode.
 3. **Scoreboard** 🏆 *(Coming Soon)*  
    - Track the high scores and stats.
