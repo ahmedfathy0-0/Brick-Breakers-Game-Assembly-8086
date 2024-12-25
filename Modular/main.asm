@@ -529,7 +529,7 @@ CHAT_WINDOW PROC
                            int                  10h                             ; Call BIOS interrupt
                           
                            clearscreen_textMode
-                           DisplayUsers         player1, player2
+                        ;    DisplayUsers         player1, player2
        
     ChatLoop:              
                            call                 chat
@@ -538,7 +538,7 @@ CHAT_WINDOW PROC
 
                            mov                  terminateChat, 0                ;to reset chat
                           
-    ;    return back to video mode
+                          ;return back to video mode
                            mov                  ah, 0
                            mov                  al, 4h
                            int                  10h
@@ -558,6 +558,8 @@ GAME PROC
     ; lea si, songNotes
     ; push si
                             CALL                 sendDelay
+                            CALL                 sendDelay
+
 
     gameLoop:              
 

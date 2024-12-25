@@ -62,7 +62,7 @@
     gift_ball_color       db  2
     gift_ball_color_2     db  2
     gift_timer            dw  0
-    current_gift          dw  4
+    current_gift          dw  3
     is_there_gift         db  0   
     current_gift_counter  dw  0
     

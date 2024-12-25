@@ -136,14 +136,14 @@ Receive PROC FAR
                  mov al,recievev
                  and al,00001111b
                  mov gift_ball_color_2,al
-                 cmp [gift_ball_color_2], 13
-                 jnz skipR
-                 cmp toInc, 0
-                 jnz escape
-                 mov toInc, 1
-                 inc  display_lives_2
-                 call DisplayLives_2
-                 jmp  skipR
+                ;  cmp [gift_ball_color_2], 13
+                ;  jnz skipR
+                ;  cmp toInc, 0
+                ;  jnz escape
+                ;  mov toInc, 1
+                ;  inc  display_lives_2
+                ; ;  call DisplayLives_2
+                ;  jmp  escape
 
 
     skipR:       
