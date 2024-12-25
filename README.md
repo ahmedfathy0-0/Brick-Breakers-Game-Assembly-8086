@@ -46,7 +46,7 @@ During the game, hit special gifts for power-ups or challenges:
 ---
 
 Developed By 👨‍💻
-Ahmed Fathy
-Tasneem Ahmed 
-Ali Alaa
-Karim Farid
+- Ahmed Fathy
+- Tasneem Ahmed 
+- Ali Alaa
+- Karim Farid
