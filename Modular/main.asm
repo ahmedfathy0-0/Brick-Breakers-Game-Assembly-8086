@@ -553,7 +553,7 @@ GAME PROC
 
                            CALL                 DrawLevel1
                            CALL                 DrawLevel1_2
-                           mov                  score, 0
+                        ;    mov                  score, 0
     ; CALL      DrawLevel2
     ; lea si, songNotes
     ; push si
@@ -718,7 +718,7 @@ GameEnd PROC FAR
                            jmp                  exit_end_game
 
     display_lose_or_win:   
-                           cmp                  score, score3
+                           cmp                  score, 332
                            jl                   display_lose
                            mov                  sendv, 00011111b
                            CALL                 Send

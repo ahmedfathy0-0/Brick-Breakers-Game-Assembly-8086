@@ -954,10 +954,13 @@ ClearBrick proc
     clear_level1:          
                            call      DrawRectangle1
                            cmp       score, score1
+                        ;    cmp       score, 10
                            jne       same_lvl
                            call      ResetBricks
                            mov       selected_level, 2
                            call      ResetAll
+                        ;    mov score, 332
+                        ;    call GameEnd
                            jmp       same_lvl
 
     clear_level2:          
