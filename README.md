@@ -1,10 +1,10 @@
-# Brick Breakers Game (8086 Assembly) 🕹️✨
+# Brick Breakers Game (8086 Assembly) 🎮✨
 
 Welcome to **Brick Breakers Game** — a competitive two-player paddle game written entirely in **8086 Assembly**! Compete, collect power-ups, and outscore your opponent!
 
 ---
 
-## Main Menu 📋
+## Main Menu 🗋
 The game features a main menu with the following options:
 1. **Play** 🎮  
    - Jump right into the action!
@@ -32,7 +32,7 @@ Each player has:
 
 During the game, hit special gifts for power-ups or challenges:
 1. **🔥 Fire Ball**: Turns the ball into fire, making it harder to control.
-2. **📏 Larger Paddle**: Temporarily increases your paddle size.
+2. **🔏 Larger Paddle**: Temporarily increases your paddle size.
 3. **📉 Smaller Paddle**: Temporarily decreases your paddle size.
 4. **✨ Double Score**: Doubles your score for every hit.
 5. **❤️ Extra Life**: Adds one extra life to your stats.
@@ -45,35 +45,41 @@ During the game, hit special gifts for power-ups or challenges:
 
 ---
 
+### Steps to Execute
+1. Place the MASM files and the Python script in the same directory.
+2. Ensure DOSBox-X is installed in `C:\DOSBox-X`.
+3. Run the Python script to configure and launch the game.
 
-## Developed By 👨‍💻 
+---
+
+## Developed By 👨‍💻
 
 <table>
 <tr>
-  <td align = "center"> 
-	<a href = "https://github.com/ahmedfathy0-0">
-	  <img src = "https://github.com/ahmedfathy0-0.png" width = 100>
+  <td align="center"> 
+	<a href="https://github.com/ahmedfathy0-0">
+	  <img src="https://github.com/ahmedfathy0-0.png" width=100>
 	  <br />
 	  <sub> Ahmed Fathy </sub>
 	</a>
   </td>
-  <td align = "center"> 
-	<a href = "https://github.com/KarimZakzouk">
-	  <img src = "https://github.com/KarimZakzouk.png" width = 100>
+  <td align="center"> 
+	<a href="https://github.com/KarimZakzouk">
+	  <img src="https://github.com/KarimZakzouk.png" width=100>
 	  <br />
 	  <sub> Karim Farid  </sub>
 	</a>
   </td>
-  <td align = "center"> 
-	<a href = "https://github.com/xx-Tasneem-Ahmed-xx">
-	  <img src = "https://github.com/xx-Tasneem-Ahmed-xx.png" width = 100>
+  <td align="center"> 
+	<a href="https://github.com/xx-Tasneem-Ahmed-xx">
+	  <img src="https://github.com/xx-Tasneem-Ahmed-xx.png" width=100>
 	  <br />
 	  <sub> Tasneem Ahmed </sub>
 	</a>
   </td>
-  <td align = "center"> 
-	<a href = "https://github.com/AliAlaa88 ">
-	  <img src = "https://github.com/AliAlaa88.png" width = 100>
+  <td align="center"> 
+	<a href="https://github.com/AliAlaa88">
+	  <img src="https://github.com/AliAlaa88.png" width=100>
 	  <br />
 	  <sub> Ali Alaa </sub>
 	</a>
