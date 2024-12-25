@@ -11,7 +11,7 @@ cycles = auto
 
 output=openglpp
 [autoexec]
-mount C D:\CMP27\8086
+mount C C:\80861
 set PATH=%PATH%;C:
 MOUNT D --path--
 D:
@@ -74,5 +74,5 @@ prog1 = ["C:\DOSBox-X\dosbox-x.exe", "-conf", "dosbox-x-generated1.conf"]
 prog2 = ["C:\DOSBox-X\dosbox-x.exe", "-conf", "dosbox-x-generated2.conf"]
 
 subprocess.Popen(prog1)
-sleep(5)
+sleep(10)
 subprocess.Popen(prog2)

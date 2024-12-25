@@ -112,50 +112,54 @@
 .STACK 100h
 
 .DATA
-    appMode          DB  1                               ; 1 for game, 2 for chat, 3 for scoreboard if existed
-    start_game_str   DB  'Start Game$'
-    chat_str         DB  'Chat$'
-    score_board_str  DB  'Score Board$'
-    chat_demo_str    DB  'Chat Demo$'
-    game_over_demo_str    DB 'Game Over Demo$'
-    you_won_str           DB 'You Won$'
-    you_lost_str          DB 'You Lost$'
-    no_lives_str          DB 'You ran out of Lives$'
-    board_demo_str        DB 'Score Board Demo$'
-    your_score_str        DB 'Your Score: $'
-    opp_score_str        DB 'Opp Score: $'
-    mode_label       DB  '=> $'
-    waiting_str      DB  'Waiting for Players$'
-    dots_str         DB  ".$", "..", "...", "....", 0
-    player1          DB  'You $'
-    player2          DB  'Player 2$'
+    appMode            DB  1                               ; 1 for game, 2 for chat, 3 for scoreboard if existed
+    start_game_str     DB  'Start Game$'
+    chat_str           DB  'Chat$'
+    score_board_str    DB  'Score Board$'
+    chat_demo_str      DB  'Chat Demo$'
+    game_over_demo_str DB  'Game Over Demo$'
+    you_won_str        DB  'You Won$'
+    you_lost_str       DB  'You Lost$'
+    no_lives_str       DB  'You ran out of Lives$'
+    board_demo_str     DB  'Score Board Demo$'
+    your_score_str     DB  'Your Score: $'
+    opp_score_str      DB  'Opp Score: $'
+    mode_label         DB  '=> $'
+    waiting_str        DB  'Waiting for Players$'
+    dots_str           DB  ".$", "..", "...", "....", 0
+    player1            DB  'You $'
+    player2            DB  'Player 2$'
+    three              DB  '3$'
+    two                DB  '2$'
+    one                DB  '1$'
+    secondscounter     db  4
 
-    padel_speed      equ 7
-    padel_speed_2    equ 7
-    ball_og_speed    equ 2
-    ball_size        equ 3
-    divide_factor    equ 2
-    ball_og_speed_2  equ 2
-    ball_size_2      equ 3
-    divide_factor_2  equ 2
+    padel_speed        equ 7
+    padel_speed_2      equ 7
+    ball_og_speed      equ 2
+    ball_size          equ 3
+    divide_factor      equ 2
+    ball_og_speed_2    equ 2
+    ball_size_2        equ 3
+    divide_factor_2    equ 2
 
-    inReset          db  0
-    score1_2         equ 28                                                                                                              ; 4 * 7
-    score2_2         equ 112                                                                                                             ; 4 * 7 + 7 * 12
-    score3_2         equ 332 
-    score1           equ 28                                                                                                              ; 4 * 7
-    score2           equ 112                                                                                                             ; 4 * 7 + 7 * 12
-    score3           equ 332  
+    inReset            db  0
+    score1_2           equ 28                              ; 4 * 7
+    score2_2           equ 112                             ; 4 * 7 + 7 * 12
+    score3_2           equ 332
+    score1             equ 28                              ; 4 * 7
+    score2             equ 112                             ; 4 * 7 + 7 * 12
+    score3             equ 332
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    gift_size        equ 6
-    gift_speed       equ 10
+    gift_size          equ 6
+    gift_speed         equ 10
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     
 
-    inReset_2        db  0
+    inReset_2          db  0
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -164,26 +168,26 @@
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    C6_freq          equ 3951
-    D6_freq          equ 3520
-    E6_freq          equ 3136
-    F6_freq          equ 2794
-    G6_freq          equ 2637
-    A6_freq          equ 2349
-    B6_freq          equ 2093
-    C7_freq          equ 1976
-    D7_freq          equ 1760
-    E7_freq          equ 1568
-    F7_freq          equ 1396
-    G7_freq          equ 1318
-    A7_freq          equ 1174
-    B7_freq          equ 1046
-    C8_freq          equ 987
-    D8_freq          equ 880
-    E8_freq          equ 784
-    F8_freq          equ 740
-    G8_freq          equ 698
-    A8_freq          equ 659
+    C6_freq            equ 3951
+    D6_freq            equ 3520
+    E6_freq            equ 3136
+    F6_freq            equ 2794
+    G6_freq            equ 2637
+    A6_freq            equ 2349
+    B6_freq            equ 2093
+    C7_freq            equ 1976
+    D7_freq            equ 1760
+    E7_freq            equ 1568
+    F7_freq            equ 1396
+    G7_freq            equ 1318
+    A7_freq            equ 1174
+    B7_freq            equ 1046
+    C8_freq            equ 987
+    D8_freq            equ 880
+    E8_freq            equ 784
+    F8_freq            equ 740
+    G8_freq            equ 698
+    A8_freq            equ 659
 
     ; songNotes  dw F6_freq, E6_freq, D6_freq, C6_freq, D6_freq, E6_freq, G6_freq,
     ;             D6_freq, E6_freq, F6_freq, G6_freq, A6_freq, B6_freq, C7_freq,
@@ -193,15 +197,15 @@
     ;             F6_freq, F7_freq, E7_freq, F6_freq, D6_freq, C6_freq, G6_freq,
     ;             A6_freq, D6_freq
 
-    noteCount        equ 40
-    noteTimer        dw  100                             ; Timer to control note playing
+    noteCount          equ 40
+    noteTimer          dw  100                             ; Timer to control note playing
 
-    freq             dw  0
-    currentNotePos   dw  0                               ; Tracks the current position in the songNotes array
+    freq               dw  0
+    currentNotePos     dw  0                               ; Tracks the current position in the songNotes array
 
-    timerForSwitch   dw  60
-    ogTimerForSwitch equ 60
-    seconds          db  4                               ;◄■■ VARIABLE IN DATA SEGMENT.
+    timerForSwitch     dw  60
+    ogTimerForSwitch   equ 60
+    seconds            db  4                               ;◄■■ VARIABLE IN DATA SEGMENT.
 
 
 
@@ -282,16 +286,16 @@ ResetAll PROC FAR
                            CALL                 DrawGift
                            pop                  bx
 
-                           mov         [gift_ball_color],2
-                           mov         [padel_width],40
-                           mov         [padel_x] ,199
-                           mov         [gift_timer],0
-                           dec         display_lives
-                           cmp         display_lives, 0
-                           jg        no_end_game
-                           CALL      GameEnd
+                           mov                  [gift_ball_color],2
+                           mov                  [padel_width],40
+                           mov                  [padel_x] ,199
+                           mov                  [gift_timer],0
+                           dec                  display_lives
+                           cmp                  display_lives, 0
+                           jg                   no_end_game
+                           CALL                 GameEnd
                            RET
-no_end_game:
+    no_end_game:           
 
                            
 
@@ -547,9 +551,9 @@ GAME PROC
                            MOV                  BX, 103h
                            INT                  10h
 
-                           CALL        DrawLevel1
-                           CALL        DrawLevel1_2
-                            mov score, 0
+                           CALL                 DrawLevel1
+                           CALL                 DrawLevel1_2
+                           mov                  score, 0
     ; CALL      DrawLevel2
     ; lea si, songNotes
     ; push si
@@ -567,41 +571,41 @@ GAME PROC
                            mov                  sendv, ax
                            CALL                 Send
 
-       CALL                 sendDelay
+                           CALL                 sendDelay
 
-       CALL                 Receive
+                           CALL                 Receive
                            CALL                 MovePadel
                            CALL                 DrawPadel
                            MOV                  ball_color, 0
                            CALL                 DrawBall
                            CALL                 MoveBall
                            
-       CALL                 sendDelay
+                           CALL                 sendDelay
                            
-       mov                  ball_color_2, 0
-       call                 DrawBall_2
-       Call                 Receive
+                           mov                  ball_color_2, 0
+                           call                 DrawBall_2
+                           Call                 Receive
 
-       mov                  bx, ball_x
-       mov                  cl,3
-       shr                  bx , cl
-       or                   bx , 01000000b
-       mov                  sendv, bx
-       CALL                 Send
+                           mov                  bx, ball_x
+                           mov                  cl,3
+                           shr                  bx , cl
+                           or                   bx , 01000000b
+                           mov                  sendv, bx
+                           CALL                 Send
                            
-       CALL                 sendDelay
+                           CALL                 sendDelay
 
-       mov                  ball_color_2, 0
-       call                 DrawBall_2
-       Call                 Receive
+                           mov                  ball_color_2, 0
+                           call                 DrawBall_2
+                           Call                 Receive
 
-       mov                  bx, ball_y
-       sub                  bx,200
-       mov                  cl,3
-       shr                  bx , cl
-       or                   bx , 11000000b
-       mov                  sendv, bx
-       CALL                 Send
+                           mov                  bx, ball_y
+                           sub                  bx,200
+                           mov                  cl,3
+                           shr                  bx , cl
+                           or                   bx , 11000000b
+                           mov                  sendv, bx
+                           CALL                 Send
  
  
                            MOV                  BL, gift_ball_color
@@ -695,118 +699,117 @@ WaitForPlayers PROC
 WaitForPlayers ENDP
 
 GameEnd PROC FAR
-    mov ah, 0
-    mov al, 4h
-    int 10h ; set video mode
-    mov ax,0600h
-    mov cx,0
-    mov dx,184FH
-    int 10h ; clear screen
-    mov ah, 2
-    mov dx, 0A0Fh
-    int 10h ;set cursor
+                           mov                  ah, 0
+                           mov                  al, 4h
+                           int                  10h                             ; set video mode
+                           mov                  ax,0600h
+                           mov                  cx,0
+                           mov                  dx,184FH
+                           int                  10h                             ; clear screen
+                           mov                  ah, 2
+                           mov                  dx, 0A0Fh
+                           int                  10h                             ;set cursor
 
-    cmp display_lives, 0
-    jne display_lose_or_win
-    mov ah, 9
-    mov dx, offset no_lives_str
-    int 21h
-    jmp exit_end_game
+                           cmp                  display_lives, 0
+                           jne                  display_lose_or_win
+                           mov                  ah, 9
+                           mov                  dx, offset no_lives_str
+                           int                  21h
+                           jmp                  exit_end_game
 
-display_lose_or_win:
-    cmp score, score3
-    jl display_lose
-    mov sendv, 00011111b
-    CALL Send
-    mov ax,0600h
-    mov cx,0
-    mov dx,184FH
-    int 10h ; clear screen
-    mov ah, 2
-    mov dx, 0A0Fh
-    int 10h ;set cursor
-    mov ah, 9
-    mov dx, offset you_won_str
-    int 21h
-    jmp continueGameOver
+    display_lose_or_win:   
+                           cmp                  score, score3
+                           jl                   display_lose
+                           mov                  sendv, 00011111b
+                           CALL                 Send
+                           mov                  ax,0600h
+                           mov                  cx,0
+                           mov                  dx,184FH
+                           int                  10h                             ; clear screen
+                           mov                  ah, 2
+                           mov                  dx, 0A0Fh
+                           int                  10h                             ;set cursor
+                           mov                  ah, 9
+                           mov                  dx, offset you_won_str
+                           int                  21h
+                           jmp                  continueGameOver
 
-display_lose:
-    mov ax,0600h
-    mov cx,0
-    mov dx,184FH
-    int 10h ; clear screen
-    mov ah, 2
-    mov dx, 0A0Fh
-    int 10h ;set cursor
-    mov ah, 9
-    mov dx, offset you_lost_str
-    int 21h
+    display_lose:          
+                           mov                  ax,0600h
+                           mov                  cx,0
+                           mov                  dx,184FH
+                           int                  10h                             ; clear screen
+                           mov                  ah, 2
+                           mov                  dx, 0A0Fh
+                           int                  10h                             ;set cursor
+                           mov                  ah, 9
+                           mov                  dx, offset you_lost_str
+                           int                  21h
 
-continueGameOver:
-    mov ah, 2
-    mov dx, 0C0Ch
-    int 10h ; set cursor
-    mov ah, 9
-    mov dx, offset your_score_str
-    int 21h
-; display number should be a micro
-    push  ax
-    mov   ax, display_score
-    xor   cx,cx
-    mov   bx,10
-    divLoopsc:      
-    xor   dx,dx
-    div   bx
-    push  dx
-    inc   cx
-    cmp   ax,0
-    ja    divLoopsc
-    mov   ah, 0Eh
-    printLoopsc:    
-    pop   dx
-    mov   al,dl
-    or    al,'0'
-    int   10h
-    loop  printLoopsc
-    pop   ax
+    continueGameOver:      
+                           mov                  ah, 2
+                           mov                  dx, 0C0Ch
+                           int                  10h                             ; set cursor
+                           mov                  ah, 9
+                           mov                  dx, offset your_score_str
+                           int                  21h
+    ; display number should be a micro
+                           push                 ax
+                           mov                  ax, display_score
+                           xor                  cx,cx
+                           mov                  bx,10
+    divLoopsc:             
+                           xor                  dx,dx
+                           div                  bx
+                           push                 dx
+                           inc                  cx
+                           cmp                  ax,0
+                           ja                   divLoopsc
+                           mov                  ah, 0Eh
+    printLoopsc:           
+                           pop                  dx
+                           mov                  al,dl
+                           or                   al,'0'
+                           int                  10h
+                           loop                 printLoopsc
+                           pop                  ax
 
-    mov ah, 2
-    mov dx, 0E0Ch
-    int 10h ; set cursor
-    mov ah, 9
-    mov dx, offset opp_score_str
-    int 21h
-; display number should be a micro
-    push  ax
-    mov   ax, display_score_2
-    xor   cx,cx
-    mov   bx,10
-    divLoopsc_2:      
-    xor   dx,dx
-    div   bx
-    push  dx
-    inc   cx
-    cmp   ax,0
-    ja    divLoopsc_2
-    mov   ah, 0Eh
-    printLoopsc_2:    
-    pop   dx
-    mov   al,dl
-    or    al,'0'
-    int   10h
-    loop  printLoopsc_2
-    pop   ax
+                           mov                  ah, 2
+                           mov                  dx, 0E0Ch
+                           int                  10h                             ; set cursor
+                           mov                  ah, 9
+                           mov                  dx, offset opp_score_str
+                           int                  21h
+    ; display number should be a micro
+                           push                 ax
+                           mov                  ax, display_score_2
+                           xor                  cx,cx
+                           mov                  bx,10
+    divLoopsc_2:           
+                           xor                  dx,dx
+                           div                  bx
+                           push                 dx
+                           inc                  cx
+                           cmp                  ax,0
+                           ja                   divLoopsc_2
+                           mov                  ah, 0Eh
+    printLoopsc_2:         
+                           pop                  dx
+                           mov                  al,dl
+                           or                   al,'0'
+                           int                  10h
+                           loop                 printLoopsc_2
+                           pop                  ax
 
-exit_end_game:
-    mov ah,0
-    int 16h
-    cmp al, 1Bh  ; Check if the pressed key is ESC (ASCII 1Bh)
-    jne exit_end_game
+    exit_end_game:         
+                           mov                  ah,0
+                           int                  16h
+                           cmp                  al, 1Bh                         ; Check if the pressed key is ESC (ASCII 1Bh)
+                           jne                  exit_end_game
 
-    MOV         AX, 4C00h
-    INT         21h
+                           MOV                  AX, 4C00h
+                           INT                  21h
 GameEnd ENDP
-
 delay proc
     delaying:              
                            in                   al, dx
@@ -827,7 +830,61 @@ delay proc
                            cmp                  al,1
                            jnz                  noRecievedData
                            
-                    
+                           CALL                 delaycounter
+                           mov                  ax, 0600h                       ; Function 06h: Scroll screen up
+                           mov                  bh, 0                           ; Background color (black)
+                           mov                  cx, 0                           ; Upper-left corner (row 0, column 0)
+                           mov                  dx, 184Fh                       ; Lower-right corner (row 24, column 79)
+                           int                  10h                             ; Call BIOS interrupt to clear the screen
+                           
+                           mov                  ah, 2                           ; Function 02h: Set cursor position
+                           mov                  dh, 0Ah                         ; Row position (change this to move vertically)
+                           mov                  dl, 12h                         ; Column position (change this to move horizontally)
+                           int                  10h                             ; Call BIOS interrupt to position the cursor
+
+                           mov                  ah, 9                           ; Function 09h: Display string
+                           mov                  dx, offset three                ; Offset of the string to display
+                           int                  21h
+                           mov                  bx,0
+                           
+                           CALL                 delaycounter
+
+                           mov                  ax, 0600h                       ; Function 06h: Scroll screen up
+                           mov                  bh, 0                           ; Background color (black)
+                           mov                  cx, 0                           ; Upper-left corner (row 0, column 0)
+                           mov                  dx, 184Fh                       ; Lower-right corner (row 24, column 79)
+                           int                  10h                             ; Call BIOS interrupt to clear the screen
+                           
+                           mov                  ah, 2                           ; Function 02h: Set cursor position
+                           mov                  dh, 0Ah                         ; Row position (change this to move vertically)
+                           mov                  dl, 12h                         ; Column position (change this to move horizontally)
+                           int                  10h                             ; Call BIOS interrupt to position the cursor
+
+                           mov                  ah, 9                           ; Function 09h: Display string
+                           mov                  dx, offset two                  ; Offset of the string to display
+                           int                  21h
+                           mov                  bx,0
+
+                           CALL                 delaycounter
+
+                           mov                  ax, 0600h                       ; Function 06h: Scroll screen up
+                           mov                  bh, 0                           ; Background color (black)
+                           mov                  cx, 0                           ; Upper-left corner (row 0, column 0)
+                           mov                  dx, 184Fh                       ; Lower-right corner (row 24, column 79)
+                           int                  10h                             ; Call BIOS interrupt to clear the screen
+                           
+                           mov                  ah, 2                           ; Function 02h: Set cursor position
+                           mov                  dh, 0Ah                         ; Row position (change this to move vertically)
+                           mov                  dl, 12h                         ; Column position (change this to move horizontally)
+                           int                  10h                             ; Call BIOS interrupt to position the cursor
+
+                           mov                  ah, 9                           ; Function 09h: Display string
+                           mov                  dx, offset one                  ; Offset of the string to display
+                           int                  21h
+                           mov                  bx,0
+
+                           CALL                 delaycounter
+
                            CALL                 GAME
     noRecievedData:        
                            mov                  ah, 2ch
@@ -838,6 +895,16 @@ delay proc
                            mov                  seconds, dh
                            ret
 delay endp
+delaycounter PROC
+    delayingc:             
+                           mov                  ah, 2ch
+                           int                  21h
+
+                           cmp                  dh, secondscounter
+                           je                   delayingc
+                           mov                  secondscounter, dh
+                           ret
+delaycounter ENDP
 sendDelay PROC
                            mov                  bx,0FFFFh
     sloop:                 
