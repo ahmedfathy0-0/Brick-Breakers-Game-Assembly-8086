@@ -553,16 +553,18 @@ GAME PROC
 
                            CALL                 DrawLevel1
                            CALL                 DrawLevel1_2
-                        ;    mov                  score, 0
+                             mov                  score, 0
     ; CALL      DrawLevel2
     ; lea si, songNotes
     ; push si
+                            CALL                 sendDelay
 
     gameLoop:              
 
                            CMP                  inReset, 1
                            JE                   waitForReset1
                            Collision            selected_level
+
                            CALL                 Receive
                            mov                  al,ball_color
                            mov                  ah,0

@@ -1,6 +1,7 @@
 PUBLIC DisplayScore, DisplayLives, DisplayScore_2, DisplayLives_2
 public score, display_score, score_2, display_score_2
 public display_lives, display_lives_2
+public toInc
 .MODEL small
 .STACK 100h
 
@@ -13,7 +14,8 @@ lives_str        db  'Lives: $'
 display_lives    db  5
 score_2          dw  0
 display_score_2  dw  0
-display_lives_2  db  5                                                                                      ; 4 * 7 + 7 * 12 + 10 * 21
+display_lives_2  db  5 
+toInc            db  0                                                                                     ; 4 * 7 + 7 * 12 + 10 * 21
 
 
 .CODE

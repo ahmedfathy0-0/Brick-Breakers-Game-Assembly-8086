@@ -11,8 +11,9 @@
     EXTRN MoveBall_2:FAR
     EXTRN ball_color_2:BYTE
     EXTRN gift_ball_color_2:BYTE
-    
- 
+    EXTRN toInc :Byte
+    EXTRN display_lives_2 :BYTE
+    EXTRN DisplayLives_2 :FAR 
 
 .MODEL small
 .STACK 100h
@@ -135,10 +136,20 @@ Receive PROC FAR
                  mov al,recievev
                  and al,00001111b
                  mov gift_ball_color_2,al
+                 cmp [gift_ball_color_2], 13
+                 jnz skipR
+                 cmp toInc, 0
+                 jnz escape
+                 mov toInc, 1
+                 inc  display_lives_2
+                 call DisplayLives_2
                  jmp  skipR
 
 
     skipR:       
+                mov toInc, 0
+    escape:
+
                  ret
 Receive ENDP
 
